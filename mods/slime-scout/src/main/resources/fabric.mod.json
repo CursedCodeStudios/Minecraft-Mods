@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "slimescout",
+  "version": "${version}",
+  "name": "Slime Scout",
+  "description": "Records slime sightings and marks potential slime chunks with optional Xaero waypoints.",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.slimescout.SlimeScout"] },
+  "license": "MIT",
+  "depends": { "fabricloader": ">=${loader_version}", "minecraft": "${minecraft_version}", "java": ">=${java_version}", "fabric-api": ">=${fabric_api_version}" },
+  "suggests": { "xaerominimap": "*", "xaeroworldmap": "*" }
+}

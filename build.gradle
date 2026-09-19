@@ -1,0 +1,91 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+plugins {
+    id 'base'
+    id 'net.fabricmc.fabric-loom' apply false
+}
+allprojects {
+    version = providers.gradleProperty('suite_version').get()
+    group = providers.gradleProperty('maven_group').get()
+}
+subprojects { apply from: rootProject.file('gradle/fabric-mod.gradle') }
+def modules = subprojects.sort { it.name }
+def metadataFiles = modules.collect { it.layout.buildDirectory.file('resources/main/fabric.mod.json') }
+
+tasks.register('verifySuite') {
+    group = 'verification'
+    description = 'Checks unique mod IDs and consistent release/platform metadata.'
+    dependsOn modules.collect { it.tasks.named('processResources') }
+    inputs.files(metadataFiles)
+    inputs.properties([suiteVersion: version.toString(), minecraftVersion: minecraft_version,
+        loaderVersion: loader_version, javaVersion: java_version, fabricApiVersion: fabric_api_version])
+    doLast {
+        modules.each { mod ->
+            if (mod.version.toString() != project.version.toString()) {
+                throw new GradleException("${mod.path} overrides the centralized suite version")
+            }
+        }
+        def ids = [] as Set
+        metadataFiles.each { path ->
+            def metadata = new JsonSlurper().parse(path.get().asFile)
+            if (!metadata.id || !ids.add(metadata.id)) {
+                throw new GradleException("Missing or duplicate mod ID: ${metadata.id}")
+            }
+            if (metadata.version != project.version.toString()
+                || metadata.depends?.minecraft != project.minecraft_version
+                || metadata.depends?.fabricloader != ">=${project.loader_version}"
+                || metadata.depends?.java != ">=${project.java_version}"
+                || metadata.depends?.get('fabric-api') != ">=${project.fabric_api_version}") {
+                throw new GradleException("${metadata.id} must use shared version/platform placeholders")
+            }
+        }
+    }
+}
+
+def manifestFile = layout.buildDirectory.file('suite-manifest.json')
+tasks.register('suiteManifest') {
+    dependsOn tasks.named('verifySuite')
+    inputs.files(metadataFiles)
+    inputs.property('suiteVersion', version.toString())
+    outputs.file(manifestFile)
+    doLast {
+        def manifest = [suite: project.name, version: project.version.toString(), mods: modules.collect { mod ->
+            def metadata = new JsonSlurper().parse(mod.layout.buildDirectory.file('resources/main/fabric.mod.json').get().asFile)
+            [id: metadata.id, name: metadata.name, version: metadata.version,
+             jar: mod.tasks.named('jar').get().archiveFileName.get(), requires: metadata.depends]
+        }]
+        manifestFile.get().asFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(manifest)) + '\n'
+    }
+}
+tasks.register('collectMods', Sync) {
+    group = 'distribution'
+    description = 'Collects only installable mod JARs and a manifest into build/suite.'
+    dependsOn tasks.named('suiteManifest')
+    into layout.buildDirectory.dir('suite')
+    modules.each { mod -> from(mod.tasks.named('jar')) }
+    from(manifestFile)
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+}
+tasks.register('suiteZip', Zip) {
+    group = 'distribution'
+    description = 'Packages all mods with installation notes.'
+    dependsOn tasks.named('collectMods')
+    archiveBaseName = rootProject.name
+    archiveVersion = project.version.toString()
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    from(layout.buildDirectory.dir('suite')) { into 'mods' }
+    from('INSTALL.md')
+    from('LICENSE')
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+tasks.named('assemble') {
+    dependsOn modules.collect { it.tasks.named('assemble') }
+    dependsOn tasks.named('suiteZip')
+}
+tasks.named('check') {
+    dependsOn modules.collect { it.tasks.named('check') }
+    dependsOn tasks.named('verifySuite')
+}
+tasks.named('clean') { dependsOn modules.collect { it.tasks.named('clean') } }

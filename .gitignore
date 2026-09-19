@@ -1,0 +1,7 @@
+.gradle/
+.gradle-user-home/
+.tools/
+build/
+run/
+*.log
+fabric-loader-versions.json

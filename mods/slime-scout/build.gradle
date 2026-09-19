@@ -1,0 +1,4 @@
+// Platform, version, testing, and packaging are inherited from the suite.
+dependencies {
+    compileOnly "maven.modrinth:xaeros-minimap:${rootProject.xaero_minimap_version}"
+}

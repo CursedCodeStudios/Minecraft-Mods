@@ -1,0 +1,38 @@
+// Shared conventions for each independently installable mod.
+apply plugin: 'net.fabricmc.fabric-loom'
+repositories {
+    mavenCentral()
+    maven { url = 'https://api.modrinth.com/maven' }
+}
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    testImplementation platform("org.junit:junit-bom:${rootProject.junit_version}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+java {
+    sourceCompatibility = JavaVersion.toVersion(rootProject.java_version)
+    targetCompatibility = JavaVersion.toVersion(rootProject.java_version)
+    withSourcesJar()
+}
+tasks.withType(JavaCompile).configureEach {
+    options.release = rootProject.java_version.toInteger()
+    options.encoding = 'UTF-8'
+}
+tasks.withType(Test).configureEach { useJUnitPlatform() }
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+tasks.named('jar') { from(rootProject.file('LICENSE')) }
+def metadataValues = [
+    version: project.version.toString(), minecraft_version: rootProject.minecraft_version,
+    loader_version: rootProject.loader_version, java_version: rootProject.java_version,
+    fabric_api_version: rootProject.fabric_api_version
+]
+tasks.named('processResources') {
+    inputs.properties(metadataValues)
+    filesMatching('fabric.mod.json') { expand metadataValues }
+}

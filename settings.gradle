@@ -1,0 +1,12 @@
+pluginManagement {
+    plugins {
+        id 'net.fabricmc.fabric-loom' version providers.gradleProperty('loom_version').get()
+    }
+    repositories {
+        maven { url = 'https://maven.fabricmc.net/' }
+        gradlePluginPortal()
+    }
+}
+rootProject.name = 'minecraft-mod-suite'
+include 'slime-scout'
+project(':slime-scout').projectDir = file('mods/slime-scout')
