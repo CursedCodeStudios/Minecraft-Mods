@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read centralized versions
+        id: versions
+        run: |
+          $config = Get-Content gradle.properties -Raw | ConvertFrom-StringData
+          if ($config.java_version -notmatch '^\d+$') { throw 'Invalid java_version' }
+          if ($config.suite_version -notmatch '^[0-9A-Za-z][0-9A-Za-z.+-]*$') { throw 'Invalid suite_version' }
+          "java=$($config.java_version)" >> $env:GITHUB_OUTPUT
+          "suite=$($config.suite_version)" >> $env:GITHUB_OUTPUT
+
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ steps.versions.outputs.java }}
+
+      - name: Set up Gradle and validate wrapper
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          cache-provider: basic
+          cache-read-only: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
+          validate-wrappers: true
+
+      - name: Build, test, and verify suite
+        run: |
+          if ($IsWindows) {
+            & ./gradlew.bat build --no-daemon --stacktrace
+          } else {
+            & ./gradlew build --no-daemon --stacktrace
+          }
+          exit $LASTEXITCODE
+
+      - name: Upload suite artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: minecraft-mod-suite-${{ steps.versions.outputs.suite }}-${{ matrix.os }}
+          path: |
+            build/suite/
+            build/distributions/*.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload test and diagnostic reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: reports-${{ matrix.os }}
+          path: |
+            mods/*/build/reports/
+            mods/*/build/test-results/
+            build/reports/
+          if-no-files-found: ignore
+          retention-days: 14

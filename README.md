@@ -35,6 +35,14 @@ Release outputs:
 
 Only copy regular mod JARs into Minecraft's `mods` directory; do not install source JARs or the ZIP. See [installation](INSTALL.md) and [Slime Scout documentation](mods/slime-scout/README.md).
 
+## Continuous integration
+
+[GitHub Actions CI](https://github.com/CursedCodeStudios/Minecraft-Mods/actions/workflows/ci.yml) runs on pushes and pull requests to `main`, and can also be started manually. It builds and tests the whole suite on Linux and Windows, using the Java version from `gradle.properties` and the Gradle wrapper. Every new module registered in the suite is included automatically.
+
+Successful runs upload the mod JARs, release manifest, and suite ZIP as downloadable artifacts. Test and diagnostic reports are uploaded even when the build fails. Artifacts are retained for 14 days. CI uses read-only repository permissions, validates the Gradle wrapper, and caches dependencies; only pushes to `main` write dependency caches. Action revisions are pinned, with weekly Dependabot update pull requests.
+
+For merge protection, select the `Build and test (ubuntu-latest)` and `Build and test (windows-latest)` checks in GitHub's branch rules. CI builds artifacts; it does not publish GitHub Releases or upload mods to Modrinth/CurseForge.
+
 ## Central versioning
 
 Edit **`suite_version` in `gradle.properties`** to release every mod at the same version. The shared convention expands that version and the Minecraft, Fabric Loader, Java, and Fabric API requirements into `fabric.mod.json`. All dependency versions also live in this file. The Gradle distribution remains pinned by the standard `gradle/wrapper/gradle-wrapper.properties` file.
