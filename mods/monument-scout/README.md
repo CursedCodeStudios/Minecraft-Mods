@@ -14,12 +14,12 @@ Xaero's Minimap is optional (compiled against 26.5.1 for 26.2); add the matching
 | --- | --- |
 | Gray / M? | Monument discovered; a complete sponge survey is pending |
 | Aqua / M | Wet or dry sponge blocks remain; the name includes their count |
-| Yellow / M- | No sponge blocks remain; elders are still observed or their count is unknown |
-| Green / OK | A complete sponge survey found zero sponges and a settled nearby entity survey found zero living elder guardians |
+| Yellow / M- | Sponge-cleared milestone reached permanently; waiting for a zero-elder survey |
+| Green / OK | Permanent completion milestone: sponges cleared, followed by zero living elders observed |
 
-Names include `[elders: N]` or `[elders: ?]`. **No three-kill counter or death history is required.** Monuments with no sponge rooms, previously looted monuments, and monuments whose elders were already removed can qualify on their first survey. Elder counts are not capped at three, so extra spawned elders prevent a cleared result too.
+Before completion, names include `[elders: N]` or `[elders: ?]`. **No three-kill counter or death history is required.** Monuments with no sponge rooms, previously looted monuments, and monuments whose elders were already removed can qualify on their first survey. Elder counts are not capped at three, so extra spawned elders prevent a cleared result too.
 
-Sponges or elders appearing again change the waypoint back. Both wet and dry **placed blocks** count, including sponges you place while draining the monument. Item drops, containers, and player inventories are not included.
+**Milestones never go backwards.** Once yellow, new sponges cannot return the waypoint to aqua. It can only advance to green when a settled survey finds zero elders. Green stays OK permanently, even if sponges or elders appear again, chunks unload, or the game restarts. These markers represent completed progress, not a live claim that the monument is still empty. Both wet and dry **placed blocks** count, including sponges you place while draining the monument. Item drops, containers, and player inventories are not included.
 
 ## Surveying
 
@@ -29,11 +29,11 @@ Each sponge survey checks the entire 58-by-58 footprint from Y=39 through Y=63, 
 
 For a zero-elder result, stay within 16 blocks of the monument center on both horizontal axes, between Y=30 and Y=80, with the surrounding chunks loaded. The mod waits for five seconds of uninterrupted zero elder observations before accepting zero. Complete block scans repeat roughly every six seconds for a single nearby monument, so allow about eight seconds after arriving for the initial cleared result. Multiple monuments share the scanning budget.
 
-The elder survey includes the footprint plus a 16-block margin on all sides and vertically, allowing for nearby wandering elders. Positive elder sightings revoke a cleared status immediately. Killing an elder is not required; the check uses currently living entities.
+The elder survey includes the footprint plus a 16-block margin on all sides and vertically, allowing for nearby wandering elders. Positive elder sightings update observations but never revoke an earned milestone. Killing an elder is not required; the check uses currently living entities.
 
-**Multiplayer limitation:** the server controls which entities and block states your client receives. “Cleared (observed)” means no sponges in the surveyed volume and no elders reported in the survey area; it is not an authoritative server-wide existence check. Reduced entity-tracking ranges, hidden/filtered block data, or elders moved outside that area can affect the result. The mod does not force-load chunks or inspect structures elsewhere in the world.
+**Multiplayer limitation:** the server controls which entities and block states your client receives. Earning a milestone relies on the surveyed block volume and client-reported elders; it is not an authoritative server-wide existence check. Reduced entity-tracking ranges, hidden/filtered block data, or elders moved outside that area can affect the result. The mod does not force-load chunks or inspect structures elsewhere in the world.
 
-Previously completed surveys persist. `[last survey]` marks stored observations that are no longer fresh, including after reconnecting or leaving the survey area. An unknown elder count is never treated as zero.
+Progress milestones persist without a stale-survey suffix. Before any milestone is earned, `[last survey]` marks observations that are no longer fresh. Unknown elder counts never advance progress. Existing version 1.2.0 saves migrate their currently saved yellow/green statuses into permanent milestones; states that already regressed before upgrading cannot be reconstructed.
 
 ## Commands
 
@@ -66,5 +66,5 @@ Suggested game checks in a disposable creative world:
 1. Visit an intact monument, load the surrounding chunks, and wait near its center. Check the waypoint and `/monumentscout here`.
 2. Remove all wet/dry sponge blocks inside its footprint. Verify yellow while elders remain, then green when the current elder count reaches zero.
 3. Visit an already-cleared monument without killing anything. Verify it reaches green.
-4. Add a sponge or summon an elder inside the survey area; verify the status reverts.
-5. Unload part of the footprint mid-scan and confirm it does not publish a false zero. Reconnect and verify saved markers carry the last-survey label until surveyed again.
+4. After earning yellow or green, add a sponge or summon an elder; verify the marker never regresses. Reconnect and check that the earned milestone persists.
+5. Unload part of the footprint mid-scan and confirm it does not publish a false zero. Reconnect and verify saved markers carry the last-survey label until surveyed again; completed milestones stay permanent.

@@ -115,7 +115,7 @@ public final class MonumentScout implements ClientModInitializer {
             if (ready && count == 0) quietTicks.merge(bounds.key(), 1, (a, b) -> Math.min(a + b, ZERO_ELDER_SETTLE_TICKS));
             else quietTicks.remove(bounds.key());
             if ((!reader.allChunksLoaded(bounds) || (entry.elders == 0 && !ready)) && entry.fresh) { entry.fresh = false; revision++; }
-            // Positive sightings immediately revoke an old "cleared" status.
+            // Keep observations current without revoking permanent completion milestones.
             if (count > 0 && count != entry.elders) { store.observeElders(entry, count); revision++; }
         }
 
