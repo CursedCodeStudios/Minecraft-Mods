@@ -1,6 +1,6 @@
 # Minecraft Mod Suite
 
-A multi-project Fabric workspace for Minecraft 26.2. Each mod is independently installable; the suite shares build conventions and releases all modules at one version. The suite includes Slime Scout and Monument Scout. Slime Scout retains its mod ID, Java packages, commands, and saved-data location.
+A multi-project Fabric workspace for Minecraft 26.2. Each mod is independently installable; the suite shares build conventions and releases all modules at one version. The suite includes Slime Scout, Monument Scout, and End City Scout. Slime Scout retains its mod ID, Java packages, commands, and saved-data location.
 
 ## Layout
 
@@ -11,6 +11,7 @@ build.gradle                  Aggregate checks and release packaging
 gradle/fabric-mod.gradle       Shared Fabric/Java/test/metadata conventions
 mods/slime-scout/              Slime sightings and per-chunk visit counters
 mods/monument-scout/           Ocean monument sponges and elder guardian surveys
+mods/end-city-scout/           End city ships, framed elytra, and living shulkers
 templates/fabric-mod/          Starting point for the next mod
 ```
 
@@ -34,7 +35,11 @@ Release outputs:
 - `build/distributions/minecraft-mod-suite-<version>.zip`: all mods with installation instructions and license.
 - `mods/<module>/build/libs/`: individual mod JAR and sources JAR.
 
-Only copy regular mod JARs into Minecraft's `mods` directory; do not install source JARs or the ZIP. See [installation](INSTALL.md), [Slime Scout documentation](mods/slime-scout/README.md), and [Monument Scout documentation](mods/monument-scout/README.md).
+Only copy regular mod JARs into Minecraft's `mods` directory; do not install source JARs or the ZIP. See [installation](INSTALL.md), [Slime Scout documentation](mods/slime-scout/README.md), [Monument Scout documentation](mods/monument-scout/README.md), and [End City Scout documentation](mods/end-city-scout/README.md).
+
+All three mods use the shared **Minecraft Scouts** Xaero waypoint set. Each mod manages its own markers, so its marker toggle does not hide another scout's markers. The mods remain independently installable.
+
+Scout waypoints are permanent Xaero records. They are saved on changes (at most once every five seconds) and on detach/shutdown, remain after leaving a dimension, and are reused by generated name prefix and horizontal position on reconnect, including markers moved to another set. Keep their generated names/positions for automatic reuse; renaming or moving their coordinates between sessions can leave a separate user marker when the scout regenerates its own. Marker hide commands change visibility without deleting records. Scout data remains the source for survey/status updates; deleting a Slime Scout marker while its scout is active still dismisses that chunk.
 
 ## Continuous integration
 
@@ -79,4 +84,4 @@ $env:GRADLE_USER_HOME = "$PWD/.gradle-user-home"
 & ./.tools/gradle/gradle-9.5.1/bin/gradle.bat build
 ```
 
-Normal checkouts only need JDK 25 and the committed wrapper; Gradle resolves the other dependencies. Xaero is compile-only for both scout mods and is not bundled.
+Normal checkouts only need JDK 25 and the committed wrapper; Gradle resolves the other dependencies. Xaero is compile-only for all three scout mods and is not bundled.

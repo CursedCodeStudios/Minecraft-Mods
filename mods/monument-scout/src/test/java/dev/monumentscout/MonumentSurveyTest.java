@@ -60,4 +60,15 @@ class MonumentSurveyTest {
         survey.advance(new Reader(), MonumentBounds.VOLUME);
         assertEquals(0, survey.sponges());
     }
+    @Test void unloadOnFinalBatchCannotPublishADecreasedCount() {
+        var survey = new MonumentSurvey(new MonumentBounds(0, 0));
+        var reader = new MonumentSurvey.Reader() {
+            boolean loaded = true;
+            public boolean allChunksLoaded(MonumentBounds bounds) { return loaded; }
+            public boolean isSponge(int x, int y, int z) { loaded = false; return false; }
+        };
+        survey.advance(reader, MonumentBounds.VOLUME);
+        assertTrue(survey.invalid()); assertFalse(survey.complete());
+        assertThrows(IllegalStateException.class, survey::sponges);
+    }
 }

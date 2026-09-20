@@ -3,5 +3,6 @@
 .tools/
 build/
 run/
+logs/
 *.log
 fabric-loader-versions.json

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "endcityscout",
+  "version": "${version}",
+  "name": "End City Scout",
+  "description": "Surveys End cities for ships, framed elytra, and living shulkers, with optional Xaero waypoints.",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.endcityscout.EndCityScout"] },
+  "license": "MIT",
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_version}",
+    "java": ">=${java_version}",
+    "fabric-api": ">=${fabric_api_version}"
+  },
+  "suggests": { "xaerominimap": "*", "xaeroworldmap": "*" }
+}

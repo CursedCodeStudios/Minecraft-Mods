@@ -50,7 +50,7 @@ public final class SlimeScout implements ClientModInitializer {
                 seen.unload(pos.pack());
             }
         });
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> { retrySaveAt = 0; save(); });
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> { retrySaveAt = 0; save(); if (xaero != null) xaero.clear(); });
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> dispatcher.register(
             literal("slimescout").executes(c -> { status(); return 1; })
                 .then(literal("toggle").executes(c -> { enabled = !enabled; say("Tracking " + (enabled ? "enabled" : "paused")); return 1; }))

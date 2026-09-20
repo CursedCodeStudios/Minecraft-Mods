@@ -21,8 +21,7 @@ import java.util.*;
 public final class MonumentScout implements ClientModInitializer {
     private static final Logger LOG = LoggerFactory.getLogger("monumentscout");
     private static final int BLOCKS_PER_TICK = 4096;
-    private static final int ZERO_ELDER_SETTLE_TICKS = 100;
-    private final Map<String, Integer> quietTicks = new HashMap<>();
+    private final Map<String, ElderObservation> elderObservations = new HashMap<>();
     private final Map<String, Long> nextSurvey = new HashMap<>();
     private ClientLevel level;
     private MonumentStore store;
@@ -36,14 +35,14 @@ public final class MonumentScout implements ClientModInitializer {
     @Override public void onInitializeClient() {
         if (FabricLoader.getInstance().isModLoaded("xaerominimap")) xaero = new XaeroBridge();
         ClientTickEvents.END_CLIENT_TICK.register(this::tick);
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> { saveRetry = 0; save(); });
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> { saveRetry = 0; save(); if (xaero != null) xaero.clear(); });
         ClientChunkEvents.CHUNK_UNLOAD.register((world, chunk) -> {
             if (world != level || store == null) return;
             var pos = chunk.getPos();
             for (var entry : store.entries()) {
-                if (entry.bounds().containsChunk(pos.x(), pos.z())) {
+                if (entry.bounds().containsElderChunk(pos.x(), pos.z())) {
                     entry.fresh = false; revision++;
-                    quietTicks.remove(entry.bounds().key());
+                    elderObservations.remove(entry.bounds().key());
                     if (survey != null && survey.bounds().equals(entry.bounds())) survey.invalidate();
                 }
             }
@@ -105,18 +104,17 @@ public final class MonumentScout implements ClientModInitializer {
             var bounds = entry.bounds();
             boolean nearby = bounds.distanceSquared(client.player.getX(), client.player.getZ()) <= 128 * 128;
             if (!nearby) {
-                quietTicks.remove(bounds.key());
+                elderObservations.remove(bounds.key());
                 if (entry.fresh) { entry.fresh = false; revision++; }
                 continue;
             }
             int count = countElders(bounds, elders);
             boolean ready = reader.allChunksLoaded(bounds) && reader.elderChunksLoaded(bounds)
                 && bounds.canSurveyElders(client.player.getX(), client.player.getY(), client.player.getZ());
-            if (ready && count == 0) quietTicks.merge(bounds.key(), 1, (a, b) -> Math.min(a + b, ZERO_ELDER_SETTLE_TICKS));
-            else quietTicks.remove(bounds.key());
-            if ((!reader.allChunksLoaded(bounds) || (entry.elders == 0 && !ready)) && entry.fresh) { entry.fresh = false; revision++; }
+            elderObservations.computeIfAbsent(bounds.key(), key -> new ElderObservation()).observe(ready, count);
+            if ((!ready || count < entry.elders) && entry.fresh) { entry.fresh = false; revision++; }
             // Keep observations current without revoking permanent completion milestones.
-            if (count > 0 && count != entry.elders) { store.observeElders(entry, count); revision++; }
+            if (count > 0 && count > entry.elders) { store.observeElders(entry, count); revision++; }
         }
 
         if (survey == null) {
@@ -132,9 +130,8 @@ public final class MonumentScout implements ClientModInitializer {
             if (survey.invalid()) { survey = null; }
             else if (survey.complete()) {
                 var entry = store.get(survey.bounds());
-                int visibleElders = countElders(survey.bounds(), elders);
-                int count = visibleElders > 0 ? visibleElders
-                    : quietTicks.getOrDefault(survey.bounds().key(), 0) >= ZERO_ELDER_SETTLE_TICKS ? 0 : -1;
+                var observation = elderObservations.get(survey.bounds().key());
+                int count = observation == null ? -1 : observation.confirmedCount();
                 var old = entry.state();
                 store.update(entry, survey.sponges(), count, System.currentTimeMillis());
                 revision++;
@@ -176,7 +173,7 @@ public final class MonumentScout implements ClientModInitializer {
     private void reset() {
         if (xaero != null) xaero.clear();
         store = null; level = null; survey = null; context = ""; dimension = "";
-        quietTicks.clear(); nextSurvey.clear(); tick = 0; revision++;
+        elderObservations.clear(); nextSurvey.clear(); tick = 0; revision++;
     }
     private boolean save() {
         if (store == null) return true;

@@ -27,5 +27,6 @@ final class MonumentSurvey {
             int y = MonumentBounds.MIN_Y + cursor / (MonumentBounds.WIDTH * MonumentBounds.WIDTH);
             if (reader.isSponge(x, y, z)) sponges++;
         }
+        if (!reader.allChunksLoaded(bounds)) invalidate();
     }
 }

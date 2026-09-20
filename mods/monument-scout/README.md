@@ -6,7 +6,7 @@ A client-only Fabric mod for Minecraft 26.2. Automatically records recognizable 
 
 Install `monument-scout-<suite-version>.jar` from the suite's `build/suite` directory with Fabric API and the matching Fabric Loader/Java versions listed in the suite installation guide.
 
-Xaero's Minimap is optional (compiled against 26.5.1 for 26.2); add the matching World Map for full-map display. Slime Scout is not required. Select the **Monument Scout** waypoint set, or enable displaying all sets to see Slime Scout and Monument Scout together.
+Xaero's Minimap is optional (compiled against 26.5.1 for 26.2); add the matching World Map for full-map display. Slime Scout is not required. Select the shared **Minecraft Scouts** waypoint set to see all installed scout mods together in the current dimension.
 
 ## Waypoint states
 
@@ -31,6 +31,8 @@ For a zero-elder result, stay within 16 blocks of the monument center on both ho
 
 The elder survey includes the footprint plus a 16-block margin on all sides and vertically, allowing for nearby wandering elders. Positive elder sightings update observations but never revoke an earned milestone. Killing an elder is not required; the check uses currently living entities.
 
+Unloading chunks or leaving survey range never lowers the saved elder or sponge counts. Partial elder sightings can only raise the saved count; a lower count (including zero) needs five seconds of the same count with complete footprint/margin coverage while near the center, then a completed block survey. Unknown elder results retain the saved count. Sponge counts change only after a complete, uninterrupted loaded-footprint scan. Unloads in the elder margin also reset the settling period. Genuine reductions still update when these checks pass.
+
 **Multiplayer limitation:** the server controls which entities and block states your client receives. Earning a milestone relies on the surveyed block volume and client-reported elders; it is not an authoritative server-wide existence check. Reduced entity-tracking ranges, hidden/filtered block data, or elders moved outside that area can affect the result. The mod does not force-load chunks or inspect structures elsewhere in the world.
 
 Progress milestones persist without a stale-survey suffix. Before any milestone is earned, `[last survey]` marks observations that are no longer fresh. Unknown elder counts never advance progress. Existing version 1.2.0 saves migrate their currently saved yellow/green statuses into permanent milestones; states that already regressed before upgrading cannot be reconstructed.
@@ -53,11 +55,11 @@ Only the Overworld is tracked. Discovery searches up to eight chunks around your
 
 Records are saved under `config/monument-scout`, separated by world/save path or server address and dimension, with atomic file replacement where supported. Saves run about every five seconds and on world changes/disconnect/shutdown. Corrupt files are preserved and tracking for that context is disabled with an error in `latest.log`. An abrupt crash may lose changes since the last save.
 
-Different logical worlds behind the same server address/dimension share a data bucket. Renaming a singleplayer save or changing a server address creates a different bucket. Xaero waypoints are temporary and regenerated from this mod's records; normal Xaero visibility settings apply.
+Different logical worlds behind the same server address/dimension share a data bucket. Renaming a singleplayer save or changing a server address creates a different bucket. Xaero waypoints are permanent, saved through Xaero, and reused when you reconnect. Leaving a dimension does not delete them. Normal Xaero visibility settings apply.
 
 ## Build and checks
 
-From the repository root: `gradlew.bat :monument-scout:build` (or `./gradlew :monument-scout:build`). Root `build` packages both mods at the centralized suite version.
+From the repository root: `gradlew.bat :monument-scout:build` (or `./gradlew :monument-scout:build`). Root `build` packages all suite mods at the centralized suite version.
 
 Automated tests cover discovery signatures, negative coordinates, scan budgets, unloaded chunks, zero-elder first visits, sponge/elder reappearance, unique records, world isolation, and persistence. The code compiles against the actual 26.2 and Xaero artifacts. In-game visual behavior has not been manually verified.
 

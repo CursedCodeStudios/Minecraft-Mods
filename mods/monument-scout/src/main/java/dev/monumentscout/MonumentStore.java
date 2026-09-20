@@ -76,12 +76,19 @@ public final class MonumentStore {
     }
     public void update(Entry e, int sponges, int elders, long now) {
         if (sponges < 0 || elders < -1) throw new IllegalArgumentException("Invalid survey");
-        e.sponges = sponges; e.elders = elders; e.everHadSponges |= sponges > 0;
+        e.sponges = sponges;
+        // Unknown coverage must never erase a saved elder count.
+        if (elders >= 0) e.elders = elders;
+        e.everHadSponges |= sponges > 0;
         e.spongesCleared |= sponges == 0;
         e.completed |= e.spongesCleared && elders == 0;
-        e.surveyedAt = now; e.fresh = true; dirty = true;
+        e.surveyedAt = now; e.fresh = elders >= 0; dirty = true;
     }
-    public void observeElders(Entry e, int count) { e.elders = count; dirty = true; }
+    public void observeElders(Entry e, int count) {
+        // These sightings may cover only part of the monument. Only update() receives
+        // counts from the settled, fully covered survey and may lower them.
+        if (count > e.elders) { e.elders = count; dirty = true; }
+    }
     public Entry get(MonumentBounds bounds) { return data.monuments.get(bounds.key()); }
     public Collection<Entry> entries() { return Collections.unmodifiableCollection(data.monuments.values()); }
     public void save() throws IOException {

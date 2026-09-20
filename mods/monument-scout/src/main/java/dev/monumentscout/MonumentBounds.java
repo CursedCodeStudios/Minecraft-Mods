@@ -19,6 +19,10 @@ public record MonumentBounds(int centerX, int centerZ) {
         return x >= (minX() >> 4) && x <= (maxX() >> 4)
             && z >= (minZ() >> 4) && z <= (maxZ() >> 4);
     }
+    public boolean containsElderChunk(int x, int z) {
+        return x >= ((minX() - 16) >> 4) && x <= ((maxX() + 16) >> 4)
+            && z >= ((minZ() - 16) >> 4) && z <= ((maxZ() + 16) >> 4);
+    }
     public boolean containsElder(double x, double y, double z) {
         return x >= minX() - 16 && x < maxX() + 17
             && z >= minZ() - 16 && z < maxZ() + 17 && y >= MIN_Y - 16 && y < MAX_Y + 17;

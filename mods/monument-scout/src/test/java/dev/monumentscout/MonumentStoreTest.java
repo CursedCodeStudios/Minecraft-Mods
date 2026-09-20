@@ -9,6 +9,29 @@ import static dev.monumentscout.MonumentStore.State.*;
 
 class MonumentStoreTest {
     @TempDir Path folder;
+    @Test void partialSightingsAndUnknownSurveysRetainSavedElderCounts() throws Exception {
+        var store = new MonumentStore(folder, "world", "minecraft:overworld");
+        var bounds = new MonumentBounds(0, 0); store.discover(bounds, false, 1);
+        var entry = store.get(bounds); store.update(entry, 24, 3, 2);
+        for (int count : new int[]{2, 1, 0, -1}) store.observeElders(entry, count);
+        assertEquals(3, entry.elders); assertEquals(24, entry.sponges);
+        store.update(entry, 24, -1, 3);
+        assertEquals(3, entry.elders); assertFalse(entry.fresh);
+        store.save();
+        var loaded = new MonumentStore(folder, "world", "minecraft:overworld");
+        assertEquals(3, loaded.get(bounds).elders); assertEquals(24, loaded.get(bounds).sponges);
+        store.observeElders(entry, 4); assertEquals(4, entry.elders);
+        store.update(entry, 12, 2, 4);
+        assertEquals(2, entry.elders); assertEquals(12, entry.sponges);
+    }
+    @Test void retainedZeroDoesNotCompleteANewSpongeMilestoneWithoutCoverage() throws Exception {
+        var store = new MonumentStore(folder, "world", "minecraft:overworld");
+        var bounds = new MonumentBounds(0, 0); store.discover(bounds, false, 1);
+        var entry = store.get(bounds); store.update(entry, 24, 0, 2);
+        store.update(entry, 0, -1, 3);
+        assertEquals(0, entry.elders); assertEquals(NO_SPONGES, entry.state());
+        store.update(entry, 0, 0, 4); assertEquals(CLEARED, entry.state());
+    }
     @Test void zeroEldersClearsAnAlreadyEmptyMonumentWithoutDeathHistory() throws Exception {
         var store = new MonumentStore(folder, "world", "minecraft:overworld");
         var b = new MonumentBounds(0, 0);

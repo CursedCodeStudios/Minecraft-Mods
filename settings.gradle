@@ -12,3 +12,5 @@ include 'slime-scout'
 project(':slime-scout').projectDir = file('mods/slime-scout')
 include 'monument-scout'
 project(':monument-scout').projectDir = file('mods/monument-scout')
+include 'end-city-scout'
+project(':end-city-scout').projectDir = file('mods/end-city-scout')
