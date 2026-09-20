@@ -10,3 +10,5 @@ pluginManagement {
 rootProject.name = 'minecraft-mod-suite'
 include 'slime-scout'
 project(':slime-scout').projectDir = file('mods/slime-scout')
+include 'monument-scout'
+project(':monument-scout').projectDir = file('mods/monument-scout')

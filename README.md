@@ -1,6 +1,6 @@
 # Minecraft Mod Suite
 
-A multi-project Fabric workspace for Minecraft 26.2. Each mod is independently installable; the suite shares build conventions and releases all modules at one version. Slime Scout is the first module. Its mod ID, Java packages, commands, and saved-data location are unchanged.
+A multi-project Fabric workspace for Minecraft 26.2. Each mod is independently installable; the suite shares build conventions and releases all modules at one version. The suite includes Slime Scout and Monument Scout. Slime Scout retains its mod ID, Java packages, commands, and saved-data location.
 
 ## Layout
 
@@ -9,7 +9,8 @@ gradle.properties             Suite, platform, integration, and test versions
 settings.gradle               Module registration and Loom plugin version
 build.gradle                  Aggregate checks and release packaging
 gradle/fabric-mod.gradle       Shared Fabric/Java/test/metadata conventions
-mods/slime-scout/              Slime Scout sources, tests, and mod-specific dependencies
+mods/slime-scout/              Slime sightings and per-chunk visit counters
+mods/monument-scout/           Ocean monument sponges and elder guardian surveys
 templates/fabric-mod/          Starting point for the next mod
 ```
 
@@ -33,7 +34,7 @@ Release outputs:
 - `build/distributions/minecraft-mod-suite-<version>.zip`: all mods with installation instructions and license.
 - `mods/<module>/build/libs/`: individual mod JAR and sources JAR.
 
-Only copy regular mod JARs into Minecraft's `mods` directory; do not install source JARs or the ZIP. See [installation](INSTALL.md) and [Slime Scout documentation](mods/slime-scout/README.md).
+Only copy regular mod JARs into Minecraft's `mods` directory; do not install source JARs or the ZIP. See [installation](INSTALL.md), [Slime Scout documentation](mods/slime-scout/README.md), and [Monument Scout documentation](mods/monument-scout/README.md).
 
 ## Continuous integration
 
@@ -78,4 +79,4 @@ $env:GRADLE_USER_HOME = "$PWD/.gradle-user-home"
 & ./.tools/gradle/gradle-9.5.1/bin/gradle.bat build
 ```
 
-Normal checkouts only need JDK 25 and the committed wrapper; Gradle resolves the other dependencies. Xaero is compile-only for Slime Scout and is not bundled.
+Normal checkouts only need JDK 25 and the committed wrapper; Gradle resolves the other dependencies. Xaero is compile-only for both scout mods and is not bundled.
