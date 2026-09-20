@@ -13,14 +13,15 @@ public final class SightingStore {
     public static final class Entry {
         public int x, z, minY;
         public long firstSeen, lastSeen, observations, visits;
-        public boolean underground;
+        public boolean underground, dismissed;
         public Entry(int x, int z, int y, long now) {
             this.x = x; this.z = z; minY = y; firstSeen = now;
         }
     }
     private static final class Data {
-        int schema = 2;
+        int schema = 3;
         Map<String, Entry> chunks = new TreeMap<>();
+        Set<UUID> splitChildren = new HashSet<>();
     }
     private final Path file;
     private Data data = new Data();
@@ -32,7 +33,7 @@ public final class SightingStore {
         if (Files.exists(file)) {
             try {
                 data = JSON.fromJson(Files.readString(file), Data.class);
-                if (data == null || (data.schema != 1 && data.schema != 2) || data.chunks == null) throw new IllegalArgumentException("Unsupported data");
+                if (data == null || (data.schema < 1 || data.schema > 3) || data.chunks == null || data.splitChildren == null) throw new IllegalArgumentException("Unsupported data");
                 for (var e : data.chunks.entrySet()) {
                     if (e.getValue() == null || !e.getKey().equals(e.getValue().x + "," + e.getValue().z))
                         throw new IllegalArgumentException("Invalid chunk record");
@@ -43,6 +44,7 @@ public final class SightingStore {
                     data.schema = 2;
                     dirty = true;
                 }
+                if (data.schema < 3) { data.schema = 3; dirty = true; }
             } catch (RuntimeException ex) { throw new IOException("Cannot read " + file + "; original retained", ex); }
         }
     }
@@ -52,6 +54,7 @@ public final class SightingStore {
     }
     public boolean record(int x, int z, int y, boolean candidate, long now) {
         String key = x + "," + z;
+        if (isDismissed(key)) return false;
         boolean fresh = !data.chunks.containsKey(key);
         Entry e = data.chunks.computeIfAbsent(key, ignored -> new Entry(x, z, y, now));
         e.minY = Math.min(e.minY, y); e.lastSeen = now; e.observations++;
@@ -62,6 +65,23 @@ public final class SightingStore {
     }
     public Collection<Entry> entries() { return Collections.unmodifiableCollection(data.chunks.values()); }
     public Entry get(int x, int z) { return data.chunks.get(x + "," + z); }
+    public boolean isDismissed(String key) {
+        Entry e = data.chunks.get(key);
+        return e != null && e.dismissed;
+    }
+    public boolean dismiss(String key) {
+        Entry e = data.chunks.get(key);
+        if (e == null || e.dismissed) return false;
+        e.dismissed = true; dirty = true; return true;
+    }
+    public boolean restore(int x, int z) {
+        Entry e = get(x, z);
+        if (e == null || !e.dismissed) return false;
+        e.dismissed = false; dirty = true; return true;
+    }
+    public void forgetDeadSplitChild(UUID id) { if (data.splitChildren.remove(id)) dirty = true; }
+    public boolean isSplitChild(UUID id) { return data.splitChildren.contains(id); }
+    public void ignoreSplitChild(UUID id) { if (data.splitChildren.add(id)) dirty = true; }
     public void unload(int x, int z) { countedThisLoad.remove(x + "," + z); }
     public void save() throws IOException {
         if (!dirty) return;

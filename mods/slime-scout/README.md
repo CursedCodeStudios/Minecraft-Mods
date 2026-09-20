@@ -18,7 +18,7 @@ Tracking starts automatically. The mod only sees entities loaded on your client,
 
 There is exactly one owned waypoint per chunk, at its center. The waypoint name includes `[visits: N]`: the number of chunk loads during which at least one slime was observed. More slimes, splitting, entity reloads, or movement while that chunk remains loaded do not increment the counter. After the chunk unloads and reloads, finding a slime increments the same waypoint. Counts persist across reconnects and restarts. They appear in the **Slime Scout** Xaero waypoint set. The set is selected when first created. If markers are missing, select that set in Xaero's waypoint menu, or enable displaying all sets. Normal Xaero waypoint visibility settings still apply.
 
-These are waypoint markers, not filled 16×16 chunk overlays. Their data is owned by Slime Scout and restored from its own save files; they are temporary in Xaero, so manual edits/deletions may be replaced on the next refresh. The integration adds no markers to your other waypoint sets. Only the current dimension is populated; revisit a dimension to restore its markers. Map browsing to another dimension does not proactively load its saved sightings.
+These are waypoint markers, not filled 16×16 chunk overlays. Their data is owned by Slime Scout and restored from its own save files; they are temporary in Xaero, and their names/counts may refresh, but deleting an owned waypoint permanently dismisses its chunk. Dismissed chunks are not recreated by new sightings, marker toggles, world changes, or restarts. Moving a marker to another Xaero set is not a deletion. The integration adds no markers to your other waypoint sets. Only the current dimension is populated; revisit a dimension to restore its markers. Map browsing to another dimension does not proactively load its saved sightings.
 
 ## Commands
 
@@ -28,6 +28,8 @@ These are waypoint markers, not filled 16×16 chunk overlays. Their data is owne
 | `/slimescout here` | Show evidence for the chunk you occupy |
 | `/slimescout toggle` | Pause/resume detection |
 | `/slimescout markers` | Hide/show owned Xaero markers |
+| `/slimescout dismiss` | Dismiss the recorded chunk you occupy |
+| `/slimescout restore` | Explicitly restore a dismissed chunk you occupy |
 | `/slimescout save` | Save immediately |
 
 The two toggles last until Minecraft closes. Recorded sightings persist across restarts.
@@ -36,7 +38,17 @@ The two toggles last until Minecraft closes. Recorded sightings persist across r
 
 Build or explore spawning space below Y=40 in the Overworld, allow slimes to spawn, and inspect the green markers. Use F3+G to inspect chunk boundaries. Repeat observations in an isolated chunk give better evidence than a single sighting in connected caves. The mod does not modify spawn rates, load extra chunks, or automatically excavate terrain.
 
-**A sighting is not proof of a slime chunk.** Slimes can move, split, be transported, be summoned, or spawn through mechanics unrelated to the usual slime-chunk rule. The client receives an entity when it becomes visible to the network; that is not necessarily its spawn location. Entity observations are kept as internal evidence, but the displayed visit count increments only once per chunk load with a sighting; it does not represent unique natural spawns. A known slime crossing a chunk boundary creates a yellow sighting and never upgrades that destination from movement alone. No sightings does not prove a chunk is unsuitable.
+**A sighting is not proof of a slime chunk.** Slimes can move, be transported, be summoned, or spawn through mechanics unrelated to the usual slime-chunk rule. The client receives an entity when it becomes visible to the network; that is not necessarily its spawn location. Entity observations are kept as internal evidence, but the displayed visit count increments only once per chunk load with a sighting; it does not represent unique natural spawns. A known slime crossing a chunk boundary creates a yellow sighting and never upgrades that destination from movement alone. No sightings does not prove a chunk is unsuitable.
+
+## Deleted markers and slime splits
+
+Deleted Xaero waypoints are detected while Slime Scout is running and saved as per-chunk dismissal flags. Deleting the entire Slime Scout waypoint set dismisses the owned markers in it too. Hiding markers, changing dimensions, or moving a waypoint to another set does not dismiss it. A dismissed chunk remains suppressed until you explicitly run `/slimescout restore` while standing in that chunk. `/slimescout dismiss` also works without Xaero.
+
+Versions before 1.2.2 did not save deletion history. If an old deleted marker has already been recreated, delete it once more after upgrading, or use `/slimescout dismiss` in that chunk. Existing sightings and visit counts migrate unchanged.
+
+New slime observations wait five client ticks (about a quarter second). The split filter matches half-size children to nearby dying parents within a short time window, including children that appear across a chunk boundary. It checks parents before children and tolerates briefly reordered death/spawn packets. Recognized children are ignored entirely: they do not create candidates, yellow sightings, or visit increments. Their UUIDs are saved per world/dimension so unloading or reconnecting does not turn a known child into new evidence. Their own offspring are filtered when their later deaths are observed too.
+
+Minecraft's client entity packets do not identify a slime's parent. This filter therefore relies on an observed death and matching size/position/timing. It cannot identify splits that happened entirely outside your client's observation, and an unrelated natural half-size slime appearing immediately beside a death can be conservatively excluded. Ordinary small and medium slimes elsewhere still count.
 
 ## Saved data
 
@@ -74,4 +86,3 @@ Suggested in-game check in a disposable creative world:
 - [Fabric's Minecraft 26.2 development notes](https://www.fabricmc.net/2026/06/15/262.html)
 - [Fabric's 26.2 example project](https://github.com/FabricMC/fabric-example-mod/tree/26.2)
 - Xaero integration uses the published mod's waypoint/session classes. Compatibility changes are caught and logged so tracking can continue when an optional integration fails.
-

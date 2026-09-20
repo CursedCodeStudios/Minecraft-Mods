@@ -73,4 +73,47 @@ class SightingStoreTest {
         store.save();
         assertEquals(2, new SightingStore(folder, "world", "minecraft:overworld").get(0, 0).visits);
     }
+    @Test void deletedChunkNeverReappearsOrAccumulatesNewSightingsUntilRestored() throws Exception {
+        var store = new SightingStore(folder, "world", "minecraft:overworld");
+        store.record(1, 2, 20, true, 1);
+        assertTrue(store.dismiss("1,2"));
+        store.unload(1, 2);
+        assertFalse(store.record(1, 2, 15, true, 2));
+        assertEquals(1, store.get(1, 2).visits);
+        store.save();
+        var loaded = new SightingStore(folder, "world", "minecraft:overworld");
+        assertTrue(loaded.isDismissed("1,2"));
+        loaded.record(1, 2, 10, true, 3);
+        assertTrue(loaded.get(1, 2).dismissed);
+        assertEquals(1, loaded.get(1, 2).observations);
+        assertTrue(loaded.restore(1, 2));
+        loaded.record(1, 2, 20, true, 4);
+        assertFalse(loaded.isDismissed("1,2"));
+        assertEquals(2, loaded.get(1, 2).visits);
+    }
+    @Test void splitChildIdentitySurvivesRestartAndIsWorldScoped() throws Exception {
+        var id = java.util.UUID.randomUUID();
+        var store = new SightingStore(folder, "world", "minecraft:overworld");
+        store.ignoreSplitChild(id); store.save();
+        assertTrue(new SightingStore(folder, "world", "minecraft:overworld").isSplitChild(id));
+        assertFalse(new SightingStore(folder, "other", "minecraft:overworld").isSplitChild(id));
+    }
+    @Test void schemaTwoLoadsWithoutSuppressingExistingRecords() throws Exception {
+        var path = folder.resolve(SightingStore.key("world\nminecraft:overworld") + ".json");
+        Files.writeString(path, """
+            {"schema":2,"chunks":{"0,0":{"x":0,"z":0,"minY":20,
+            "observations":5,"visits":3,"firstSeen":1,"lastSeen":9,"underground":true}}}
+            """);
+        var store = new SightingStore(folder, "world", "minecraft:overworld");
+        assertFalse(store.get(0, 0).dismissed);
+        assertEquals(3, store.get(0, 0).visits);
+        assertFalse(store.isSplitChild(java.util.UUID.randomUUID()));
+    }
+    @Test void deadSplitChildrenAreRemovedFromPersistentIgnoreList() throws Exception {
+        var id = java.util.UUID.randomUUID();
+        var store = new SightingStore(folder, "world", "minecraft:overworld");
+        store.ignoreSplitChild(id); store.save();
+        store.forgetDeadSplitChild(id); store.save();
+        assertFalse(new SightingStore(folder, "world", "minecraft:overworld").isSplitChild(id));
+    }
 }
