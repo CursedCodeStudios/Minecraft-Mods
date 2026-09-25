@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "dev.fryutilities.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "ClientLevelMixin",
+    "EntityRendererMixin",
+    "MenuScreensMixin",
+    "MerchantScreenMixin",
+    "MinecraftMixin",
+    "MultiPlayerGameModeMixin"
+  ],
+  "injectors": { "defaultRequire": 1 }
+}

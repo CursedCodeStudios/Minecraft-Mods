@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "fryutilities",
+  "version": "${version}",
+  "name": "Fry Utilities",
+  "description": "A growing collection of client-side quality-of-life features.",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.fryutilities.FryUtilities"] },
+  "mixins": ["fryutilities.mixins.json"],
+  "license": "MIT",
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_version}",
+    "java": ">=${java_version}",
+    "fabric-api": ">=${fabric_api_version}"
+  },
+  "breaks": { "villager_trading_plus": "*" }
+}

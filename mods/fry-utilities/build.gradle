@@ -1,0 +1,5 @@
+// This module intentionally has no dependencies beyond the suite's shared Fabric conventions.
+
+tasks.named('jar') {
+    from('THIRD_PARTY_NOTICES.md')
+}

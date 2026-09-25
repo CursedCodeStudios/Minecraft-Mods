@@ -63,10 +63,10 @@ jobs:
           }
           exit $LASTEXITCODE
 
-      - name: Verify packaged scout modules
+      - name: Verify packaged suite modules
         run: |
           $manifest = Get-Content build/suite/suite-manifest.json -Raw | ConvertFrom-Json
-          $expected = @('bedrockscout', 'endcityscout', 'monumentscout', 'nautilusscout', 'seedscout', 'slimescout') | Sort-Object
+          $expected = @('bedrockscout', 'endcityscout', 'fryutilities', 'monumentscout', 'nautilusscout', 'seedscout', 'slimescout') | Sort-Object
           $actual = @($manifest.mods.id) | Sort-Object
           if (Compare-Object $expected $actual) {
             throw "Suite manifest IDs differ. Expected: $($expected -join ', '); actual: $($actual -join ', ')"

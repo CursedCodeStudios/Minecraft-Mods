@@ -20,3 +20,5 @@ include 'bedrock-scout'
 project(':bedrock-scout').projectDir = file('mods/bedrock-scout')
 include 'seed-scout'
 project(':seed-scout').projectDir = file('mods/seed-scout')
+include 'fry-utilities'
+project(':fry-utilities').projectDir = file('mods/fry-utilities')

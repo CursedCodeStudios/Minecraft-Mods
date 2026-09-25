@@ -1,6 +1,6 @@
 # Minecraft Mod Suite
 
-A multi-project Fabric workspace for Minecraft 26.2. Each mod is independently installable; the suite shares build conventions and releases all modules at one version. The suite includes Slime Scout, Monument Scout, End City Scout, Nautilus Scout, Bedrock Scout, and Seed Scout. Slime Scout retains its mod ID, Java packages, commands, and saved-data location.
+A multi-project Fabric workspace for Minecraft 26.2. Each mod is independently installable; the suite shares build conventions and releases all modules at one version. The suite includes Slime Scout, Monument Scout, End City Scout, Nautilus Scout, Bedrock Scout, Seed Scout, and Fry Utilities. Slime Scout retains its mod ID, Java packages, commands, and saved-data location.
 
 ## Layout
 
@@ -15,6 +15,7 @@ mods/end-city-scout/           End city ships, framed elytra, and living shulker
 mods/nautilus-scout/           Glowing drowned holding nautilus shells
 mods/bedrock-scout/            Exposed 3x3 Nether-roof bedrock formations
 mods/seed-scout/               Local Nether-bedrock world-seed recovery
+mods/fry-utilities/             Villager fast trading, favorites, and highlights
 templates/fabric-mod/          Starting point for the next mod
 ```
 
@@ -38,7 +39,7 @@ Release outputs:
 - `build/distributions/minecraft-mod-suite-<version>.zip`: all mods with installation instructions and license.
 - `mods/<module>/build/libs/`: individual mod JAR and sources JAR.
 
-Only copy regular mod JARs into Minecraft's `mods` directory; do not install source JARs or the ZIP. See [installation](INSTALL.md), [Slime Scout documentation](mods/slime-scout/README.md), [Monument Scout documentation](mods/monument-scout/README.md), [End City Scout documentation](mods/end-city-scout/README.md), [Nautilus Scout documentation](mods/nautilus-scout/README.md), [Bedrock Scout documentation](mods/bedrock-scout/README.md), and [Seed Scout documentation](mods/seed-scout/README.md).
+Only copy regular mod JARs into Minecraft's `mods` directory; do not install source JARs or the ZIP. See [installation](INSTALL.md), [Slime Scout documentation](mods/slime-scout/README.md), [Monument Scout documentation](mods/monument-scout/README.md), [End City Scout documentation](mods/end-city-scout/README.md), [Nautilus Scout documentation](mods/nautilus-scout/README.md), [Bedrock Scout documentation](mods/bedrock-scout/README.md), [Seed Scout documentation](mods/seed-scout/README.md), and [Fry Utilities documentation](mods/fry-utilities/README.md).
 
 Slime Scout, Monument Scout, End City Scout, and Bedrock Scout use the shared **Minecraft Scouts** Xaero waypoint set. Nautilus Scout highlights shell-carrying drowned directly and adds no waypoints. Each mod manages its own markers, so its marker toggle does not hide another scout's markers. The mods remain independently installable.
 
@@ -88,3 +89,5 @@ $env:GRADLE_USER_HOME = "$PWD/.gradle-user-home"
 ```
 
 Normal checkouts only need JDK 25 and the committed wrapper; Gradle resolves the other dependencies. Xaero is compile-only for the four waypoint scout mods and is not bundled. Nautilus Scout does not depend on Xaero.
+
+Fry Utilities is a full in-project rewrite of Villager Trading Plus with persistent favorite trades. Middle-click a trade row to favorite it; villagers with an observed or workstation-estimated available favorite glow green within 20 blocks. Remove the original Villager Trading Plus JAR before installing Fry Utilities.
