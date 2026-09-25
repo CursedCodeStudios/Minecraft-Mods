@@ -14,3 +14,9 @@ include 'monument-scout'
 project(':monument-scout').projectDir = file('mods/monument-scout')
 include 'end-city-scout'
 project(':end-city-scout').projectDir = file('mods/end-city-scout')
+include 'nautilus-scout'
+project(':nautilus-scout').projectDir = file('mods/nautilus-scout')
+include 'bedrock-scout'
+project(':bedrock-scout').projectDir = file('mods/bedrock-scout')
+include 'seed-scout'
+project(':seed-scout').projectDir = file('mods/seed-scout')

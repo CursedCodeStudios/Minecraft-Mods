@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "bedrockscout",
+  "version": "${version}",
+  "name": "Bedrock Scout",
+  "description": "Finds exposed 3x3 bedrock formations in the Nether ceiling for wither-killing platforms.",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.bedrockscout.BedrockScout"] },
+  "license": "MIT",
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_version}",
+    "java": ">=${java_version}",
+    "fabric-api": ">=${fabric_api_version}"
+  },
+  "suggests": { "xaerominimap": "*", "xaeroworldmap": "*" }
+}

@@ -63,6 +63,27 @@ jobs:
           }
           exit $LASTEXITCODE
 
+      - name: Verify packaged scout modules
+        run: |
+          $manifest = Get-Content build/suite/suite-manifest.json -Raw | ConvertFrom-Json
+          $expected = @('bedrockscout', 'endcityscout', 'monumentscout', 'nautilusscout', 'seedscout', 'slimescout') | Sort-Object
+          $actual = @($manifest.mods.id) | Sort-Object
+          if (Compare-Object $expected $actual) {
+            throw "Suite manifest IDs differ. Expected: $($expected -join ', '); actual: $($actual -join ', ')"
+          }
+          foreach ($mod in $manifest.mods) {
+            $jar = Join-Path build/suite $mod.jar
+            if (-not (Test-Path -LiteralPath $jar -PathType Leaf)) {
+              throw "Missing packaged mod: $jar"
+            }
+          }
+          $seedJar = Join-Path build/suite (($manifest.mods | Where-Object id -eq 'seedscout').jar)
+          $entries = @(& jar tf $seedJar)
+          if ($LASTEXITCODE -ne 0) { throw "Could not inspect $seedJar" }
+          if ($entries -notcontains 'META-INF/jars/netherbedrockcracker-1.5.0.jar') {
+            throw 'Seed Scout is missing its embedded Nether Bedrock Cracker engine'
+          }
+
       - name: Upload suite artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "seedscout",
+  "version": "${version}",
+  "name": "Seed Scout",
+  "description": "Recovers a Java world seed from modern Nether bedrock patterns.",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.seedscout.SeedScout"] },
+  "accessWidener": "seedscout.accesswidener",
+  "license": "MIT",
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_version}",
+    "java": ">=${java_version}",
+    "fabric-api": ">=${fabric_api_version}",
+    "netherbedrockcracker": ">=1.5.0"
+  }
+}

@@ -1,0 +1,16 @@
+repositories {
+    maven { url = rootProject.file('vendor/maven') }
+}
+
+dependencies {
+    implementation 'dev.xpple:netherbedrockcracker:1.5.0'
+    include 'dev.xpple:netherbedrockcracker:1.5.0'
+}
+
+loom {
+    accessWidenerPath = file('src/main/resources/seedscout.accesswidener')
+}
+
+tasks.named('jar') {
+    from('THIRD_PARTY_NOTICES.md')
+}

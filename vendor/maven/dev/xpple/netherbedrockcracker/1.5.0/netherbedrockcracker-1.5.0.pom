@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>dev.xpple</groupId>
+  <artifactId>netherbedrockcracker</artifactId>
+  <version>1.5.0</version>
+  <name>Nether Bedrock Cracker</name>
+  <description>Vendored official Minecraft 26.2 release used by Seed Scout.</description>
+  <url>https://github.com/xpple/NetherBedrockCracker</url>
+  <licenses>
+    <license>
+      <name>GNU Lesser General Public License v3.0 or later</name>
+      <url>https://www.gnu.org/licenses/lgpl-3.0.html</url>
+    </license>
+  </licenses>
+</project>
