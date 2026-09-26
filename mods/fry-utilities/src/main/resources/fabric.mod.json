@@ -3,9 +3,17 @@
   "id": "fryutilities",
   "version": "${version}",
   "name": "Fry Utilities",
-  "description": "A growing collection of client-side quality-of-life features.",
+  "description": "Villager trading tools, entity highlights, and End city, slime, and monument scouts.",
   "environment": "client",
-  "entrypoints": { "client": ["dev.fryutilities.FryUtilities"] },
+  "entrypoints": {
+    "client": [
+      "dev.frydae.utilities.FryUtilities",
+      "dev.frydae.endcity.EndCityScout",
+      "dev.frydae.slime.SlimeScout",
+      "dev.frydae.monument.MonumentScout"
+    ],
+    "modmenu": ["dev.frydae.utilities.FryUtilitiesModMenu"]
+  },
   "mixins": ["fryutilities.mixins.json"],
   "license": "MIT",
   "depends": {
@@ -14,5 +22,16 @@
     "java": ">=${java_version}",
     "fabric-api": ">=${fabric_api_version}"
   },
-  "breaks": { "villager_trading_plus": "*" }
+  "suggests": {
+    "modmenu": ">=20.0.0",
+    "xaerominimap": "*",
+    "xaeroworldmap": "*"
+  },
+  "breaks": {
+    "villager_trading_plus": "*",
+    "nautilusscout": "*",
+    "endcityscout": "*",
+    "slimescout": "*",
+    "monumentscout": "*"
+  }
 }

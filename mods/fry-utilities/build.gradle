@@ -1,4 +1,16 @@
-// This module intentionally has no dependencies beyond the suite's shared Fabric conventions.
+repositories {
+    maven {
+        name = 'TerraformersMC'
+        url = 'https://maven.terraformersmc.com/'
+        content { includeGroup 'com.terraformersmc' }
+    }
+}
+
+dependencies {
+    compileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
+    compileOnly "maven.modrinth:xaeros-minimap:${rootProject.xaero_minimap_version}"
+    testImplementation "maven.modrinth:xaeros-minimap:${rootProject.xaero_minimap_version}"
+}
 
 tasks.named('jar') {
     from('THIRD_PARTY_NOTICES.md')

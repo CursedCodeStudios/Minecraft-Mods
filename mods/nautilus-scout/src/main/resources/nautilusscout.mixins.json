@@ -1,7 +1,0 @@
-{
-  "required": true,
-  "package": "dev.nautilusscout.mixin",
-  "compatibilityLevel": "JAVA_25",
-  "client": ["MinecraftMixin"],
-  "injectors": { "defaultRequire": 1 }
-}

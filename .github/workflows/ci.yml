@@ -66,7 +66,7 @@ jobs:
       - name: Verify packaged suite modules
         run: |
           $manifest = Get-Content build/suite/suite-manifest.json -Raw | ConvertFrom-Json
-          $expected = @('bedrockscout', 'endcityscout', 'fryutilities', 'monumentscout', 'nautilusscout', 'seedscout', 'slimescout') | Sort-Object
+          $expected = @('bedrockscout', 'fryutilities', 'seedscout') | Sort-Object
           $actual = @($manifest.mods.id) | Sort-Object
           if (Compare-Object $expected $actual) {
             throw "Suite manifest IDs differ. Expected: $($expected -join ', '); actual: $($actual -join ', ')"
@@ -82,6 +82,20 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Could not inspect $seedJar" }
           if ($entries -notcontains 'META-INF/jars/netherbedrockcracker-1.5.0.jar') {
             throw 'Seed Scout is missing its embedded Nether Bedrock Cracker engine'
+          }
+          $utilitiesJar = Join-Path build/suite (($manifest.mods | Where-Object id -eq 'fryutilities').jar)
+          $utilitiesEntries = @(& jar tf $utilitiesJar)
+          if ($LASTEXITCODE -ne 0) { throw "Could not inspect $utilitiesJar" }
+          $mergedEntrypoints = @(
+            'dev/frydae/utilities/FryUtilities.class',
+            'dev/frydae/endcity/EndCityScout.class',
+            'dev/frydae/slime/SlimeScout.class',
+            'dev/frydae/monument/MonumentScout.class'
+          )
+          foreach ($entrypoint in $mergedEntrypoints) {
+            if ($utilitiesEntries -notcontains $entrypoint) {
+              throw "Fry Utilities is missing merged entrypoint: $entrypoint"
+            }
           }
 
       - name: Upload suite artifacts

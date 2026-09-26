@@ -1,4 +1,0 @@
-dependencies {
-    testImplementation "maven.modrinth:xaeros-minimap:${rootProject.xaero_minimap_version}"
-    compileOnly "maven.modrinth:xaeros-minimap:${rootProject.xaero_minimap_version}"
-}
