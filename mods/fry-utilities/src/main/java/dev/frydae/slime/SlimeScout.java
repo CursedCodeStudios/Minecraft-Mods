@@ -1,5 +1,6 @@
 package dev.frydae.slime;
 
+import dev.frydae.utilities.FryUtilities;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -28,7 +29,7 @@ public final class SlimeScout implements ClientModInitializer {
     private ClientLevel activeLevel;
     private String context = "", dimension = "";
     private int ticks, revision;
-    private boolean enabled = true, markers = true;
+    private boolean enabled = true, markers = true, suspended;
     private XaeroBridge xaero;
     private long retrySaveAt;
 
@@ -50,7 +51,7 @@ public final class SlimeScout implements ClientModInitializer {
                 seen.unload(pos.pack());
             }
         });
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> { retrySaveAt = 0; save(); if (xaero != null) xaero.clear(); });
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> { retrySaveAt = 0; save(); if (xaero != null) xaero.close(); });
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> dispatcher.register(
             literal("slimescout").executes(c -> { status(); return 1; })
                 .then(literal("toggle").executes(c -> { enabled = !enabled; say("Tracking " + (enabled ? "enabled" : "paused")); return 1; }))
@@ -62,6 +63,8 @@ public final class SlimeScout implements ClientModInitializer {
         ));
     }
     private void tick(Minecraft client) {
+        if (!FryUtilities.config().slimeScoutEnabled()) { suspend(client); return; }
+        if (suspended) { suspended = false; setScoutVisibility(client, true); }
         if (client.level == null || client.player == null) {
             if (!context.isEmpty()) { if (!save()) return; reset(); }
             return;
@@ -77,7 +80,7 @@ public final class SlimeScout implements ClientModInitializer {
             if (!save()) return;
             reset(); context = next; dimension = dim; activeLevel = client.level;
             try { store = new SightingStore(FabricLoader.getInstance().getConfigDir().resolve("slime-scout"), world, dim); }
-            catch (IOException ex) { LOG.error("Sightings could not be opened", ex); say("Cannot open sightings; tracking disabled for this world. See latest.log."); }
+            catch (IOException ex) { LOG.error("Sightings could not be opened", ex); announce("Cannot open sightings; tracking disabled for this world. See latest.log."); }
         }
         if (store == null) return;
         ticks++;
@@ -120,10 +123,26 @@ public final class SlimeScout implements ClientModInitializer {
                 LOG.error("Xaero integration unavailable", ex);
                 try { xaero.clear(); } catch (RuntimeException | LinkageError ignored) { }
                 xaero = null;
-                say("Xaero integration failed; sightings still record. See latest.log.");
+                announce("Xaero integration failed; sightings still record. See latest.log.");
             }
         }
         if (ticks % 100 == 0) save();
+    }
+    private void suspend(Minecraft client) {
+        if (!suspended) {
+            if (!save()) return;
+            reset(); suspended = true;
+        }
+        setScoutVisibility(client, false);
+    }
+    private void setScoutVisibility(Minecraft client, boolean visible) {
+        if (xaero == null || client.level == null) return;
+        try { xaero.setScoutVisibility(client.level.dimension().identifier().toString(), visible); }
+        catch (RuntimeException | LinkageError ex) {
+            LOG.error("Cannot change Slime Scout waypoint visibility", ex);
+            try { xaero.clear(); } catch (RuntimeException | LinkageError ignored) { }
+            xaero = null;
+        }
     }
     private static SplitFilter.Sample sample(Slime slime) {
         return new SplitFilter.Sample(slime.getUUID(), slime.getSize(), slime.getX(), slime.getY(), slime.getZ(), slime.getBbWidth());
@@ -131,7 +150,7 @@ public final class SlimeScout implements ClientModInitializer {
     private void record(int x, int z, int y, boolean candidate) {
         if (store.isDismissed(x + "," + z)) return;
         if (store.record(x, z, y, candidate, System.currentTimeMillis()))
-            say((candidate ? "Potential slime chunk" : "Slime sighting") + " at chunk " + x + ", " + z);
+            announce((candidate ? "Potential slime chunk" : "Slime sighting") + " at chunk " + x + ", " + z);
         revision++;
     }
     private void dismissHere(boolean restore) {
@@ -153,12 +172,15 @@ public final class SlimeScout implements ClientModInitializer {
         try { store.save(); retrySaveAt = 0; return true; }
         catch (IOException ex) {
             LOG.error("Cannot save sightings; retaining them in memory", ex);
-            if (retrySaveAt == 0) say("Cannot save sightings. Keeping them in memory and retrying; see latest.log.");
+            if (retrySaveAt == 0) announce("Cannot save sightings. Keeping them in memory and retrying; see latest.log.");
             retrySaveAt = System.currentTimeMillis() + 5000;
             return false;
         }
     }
     private void status() {
+        if (!FryUtilities.config().slimeScoutEnabled()) {
+            say("Disabled in Fry Utilities settings."); return;
+        }
         long strong = store == null ? 0 : store.entries().stream().filter(e -> e.underground && !e.dismissed).count();
         say("Tracking " + (enabled ? "on" : "paused") + "; " + (store == null ? 0 : store.entries().stream().filter(e -> !e.dismissed).count())
             + " chunks, " + strong + " below-Y=40 candidates in this dimension. Xaero: " + (xaero == null ? "unavailable" : markers ? "on" : "hidden")
@@ -175,5 +197,8 @@ public final class SlimeScout implements ClientModInitializer {
     private static void say(String message) {
         var player = Minecraft.getInstance().player;
         if (player != null) player.sendSystemMessage(Component.literal("[Slime Scout] " + message));
+    }
+    private static void announce(String message) {
+        if (FryUtilities.config().slimeScoutEnabled() && FryUtilities.config().slimeScoutChat()) say(message);
     }
 }

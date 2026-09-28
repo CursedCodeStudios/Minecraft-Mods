@@ -16,12 +16,30 @@ class FryUtilitiesConfigTest {
         assertTrue(defaults.enchantedBookLabels());
         assertTrue(defaults.nautilusHighlights());
         assertTrue(defaults.tridentHighlights());
+        assertTrue(defaults.noStripProtection());
+        assertTrue(defaults.noStripFeedback());
+        assertTrue(defaults.containerExportButton());
+        assertTrue(defaults.slimeScoutEnabled());
+        assertTrue(defaults.monumentScoutEnabled());
+        assertTrue(defaults.endCityScoutEnabled());
+        assertTrue(defaults.slimeScoutChat());
+        assertTrue(defaults.monumentScoutChat());
+        assertTrue(defaults.endCityScoutChat());
         assertEquals(20, defaults.villagerRange());
 
         defaults.setVillagerHighlights(false);
         defaults.setEnchantedBookLabels(false);
         defaults.setNautilusHighlights(false);
         defaults.setTridentHighlights(false);
+        defaults.setNoStripProtection(false);
+        defaults.setNoStripFeedback(false);
+        defaults.setContainerExportButton(false);
+        defaults.setSlimeScoutEnabled(false);
+        defaults.setMonumentScoutEnabled(false);
+        defaults.setEndCityScoutEnabled(false);
+        defaults.setSlimeScoutChat(false);
+        defaults.setMonumentScoutChat(false);
+        defaults.setEndCityScoutChat(false);
         defaults.setVillagerRange(48);
         defaults.save(file);
 
@@ -30,6 +48,15 @@ class FryUtilitiesConfigTest {
         assertFalse(loaded.enchantedBookLabels());
         assertFalse(loaded.nautilusHighlights());
         assertFalse(loaded.tridentHighlights());
+        assertFalse(loaded.noStripProtection());
+        assertFalse(loaded.noStripFeedback());
+        assertFalse(loaded.containerExportButton());
+        assertFalse(loaded.slimeScoutEnabled());
+        assertFalse(loaded.monumentScoutEnabled());
+        assertFalse(loaded.endCityScoutEnabled());
+        assertFalse(loaded.slimeScoutChat());
+        assertFalse(loaded.monumentScoutChat());
+        assertFalse(loaded.endCityScoutChat());
         assertEquals(48, loaded.villagerRange());
     }
 
@@ -39,6 +66,15 @@ class FryUtilitiesConfigTest {
         var loaded = FryUtilitiesConfig.load(file);
         assertTrue(loaded.villagerHighlights());
         assertTrue(loaded.enchantedBookLabels());
+        assertTrue(loaded.noStripProtection());
+        assertTrue(loaded.noStripFeedback());
+        assertTrue(loaded.containerExportButton());
+        assertTrue(loaded.slimeScoutEnabled());
+        assertTrue(loaded.monumentScoutEnabled());
+        assertTrue(loaded.endCityScoutEnabled());
+        assertTrue(loaded.slimeScoutChat());
+        assertTrue(loaded.monumentScoutChat());
+        assertTrue(loaded.endCityScoutChat());
         assertEquals(64, loaded.villagerRange());
     }
 

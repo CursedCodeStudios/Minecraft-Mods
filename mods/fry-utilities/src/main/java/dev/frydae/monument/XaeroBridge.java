@@ -16,9 +16,33 @@ final class XaeroBridge {
     private final PermanentWaypoints permanent = new PermanentWaypoints();
     private MinimapWorld world;
     private int revision = -1;
+    private Boolean scoutVisibility;
     void clear() {
-        permanent.detach();
-        owned.clear(); attached = null; world = null; revision = -1;
+        permanent.detach(false);
+        reset();
+    }
+    void close() {
+        permanent.detach(true);
+        reset();
+    }
+    private void reset() {
+        owned.clear(); attached = null; world = null; revision = -1; scoutVisibility = null;
+    }
+    void setScoutVisibility(String dimension, boolean visible) {
+        var session = XaeroMinimapSession.getCurrentSession();
+        if (session == null) { clear(); return; }
+        var manager = session.getMinimapProcessor().getSession().getWorldManager();
+        var target = manager.getAutoWorld();
+        if (target == null || target.getDimId() == null
+            || !target.getDimId().identifier().toString().equals(dimension)) { clear(); return; }
+        if (target == world && Objects.equals(scoutVisibility, visible)) return;
+        if (target != world) {
+            clear(); world = target;
+            permanent.attach(target, session.getMinimapProcessor().getSession().getWorldManagerIO());
+        }
+        for (var marker : permanent.all())
+            if (isScoutName(marker.getName())) permanent.visible(marker, visible);
+        scoutVisibility = visible; permanent.changed();
     }
     void sync(MonumentStore store, String dimension, boolean visible, int version) {
         var session = XaeroMinimapSession.getCurrentSession();
@@ -30,7 +54,7 @@ final class XaeroBridge {
         permanent.save(false);
         if (target == world && revision == version) return;
         if (target != world) clear();
-        world = target; revision = version;
+        world = target; revision = version; scoutVisibility = visible;
         permanent.attach(target, session.getMinimapProcessor().getSession().getWorldManagerIO());
         attached = target.getWaypointSet(SET);
         if (attached == null) {
@@ -64,4 +88,5 @@ final class XaeroBridge {
         }
         permanent.changed(); permanent.save(false);
     }
+    private static boolean isScoutName(String name) { return name.startsWith("Monument: "); }
 }

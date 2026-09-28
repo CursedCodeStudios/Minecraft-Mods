@@ -9,6 +9,8 @@ repositories {
 dependencies {
     compileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
     compileOnly "maven.modrinth:xaeros-minimap:${rootProject.xaero_minimap_version}"
+    compileOnly "maven.modrinth:GcWjdA9I:${rootProject.malilib_version_id}"
+    compileOnly "maven.modrinth:bEpr0Arc:${rootProject.litematica_version_id}"
     testImplementation "maven.modrinth:xaeros-minimap:${rootProject.xaero_minimap_version}"
 }
 

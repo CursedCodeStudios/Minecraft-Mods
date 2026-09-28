@@ -27,7 +27,7 @@ class PermanentWaypointsTest {
         world.addWaypointSet("Moved"); world.getWaypointSet("Moved").add(w);
         var saves = new AtomicInteger();
         var first = new PermanentWaypoints(); first.attach(world, ignored -> saves.incrementAndGet());
-        first.changed(); first.detach();
+        first.changed(); first.detach(true);
         assertEquals(1, saves.get()); assertEquals(1, world.getWaypointSet("Moved").size());
         var next = new PermanentWaypoints(); next.attach(world, ignored -> { });
         assertSame(w, next.find(-24, 40, n -> n.startsWith("Scout ")));
@@ -54,8 +54,15 @@ class PermanentWaypointsTest {
         helper.changed(); helper.save(true);
         assertTrue(w.isDisabled()); assertEquals(1, world.getCurrentWaypointSet().size());
         assertEquals(1, saves.get());
-        helper.detach(); assertFalse(w.isDisabled());
+        helper.detach(false); assertFalse(w.isDisabled());
         assertEquals(1, world.getCurrentWaypointSet().size());
+    }
+    @Test void dimensionDetachRestoresVisibilityWithoutSaving() throws Exception {
+        var world = world(); var w = marker("Scout example"); world.getCurrentWaypointSet().add(w);
+        var saves = new AtomicInteger(); var helper = new PermanentWaypoints();
+        helper.attach(world, ignored -> saves.incrementAndGet());
+        helper.visible(w, false); helper.changed(); helper.detach(false);
+        assertFalse(w.isDisabled()); assertEquals(0, saves.get());
     }
     @Test void failedSavesAreRetriedWithoutLosingMarkers() throws Exception {
         var world = world(); world.getCurrentWaypointSet().add(marker("Scout example"));

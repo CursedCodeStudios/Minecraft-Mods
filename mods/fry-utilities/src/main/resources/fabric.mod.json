@@ -3,7 +3,7 @@
   "id": "fryutilities",
   "version": "${version}",
   "name": "Fry Utilities",
-  "description": "Villager trading tools, entity highlights, and End city, slime, and monument scouts.",
+  "description": "Villager trading tools, container JSON exports, entity highlights, No Strip protection, and structure scouts.",
   "environment": "client",
   "entrypoints": {
     "client": [
@@ -24,12 +24,15 @@
   },
   "suggests": {
     "modmenu": ">=20.0.0",
+    "litematica": ">=0.28.4",
+    "malilib": ">=0.29.2",
     "xaerominimap": "*",
     "xaeroworldmap": "*"
   },
   "breaks": {
     "villager_trading_plus": "*",
     "nautilusscout": "*",
+    "nostrip": "*",
     "endcityscout": "*",
     "slimescout": "*",
     "monumentscout": "*"

@@ -15,9 +15,17 @@ final class XaeroBridge {
     private final PermanentWaypoints permanent = new PermanentWaypoints();
     private MinimapWorld world;
     private int revision = -1;
+    private Boolean scoutVisibility;
     void clear() {
-        permanent.detach();
-        owned.clear(); attached = null; world = null; revision = -1;
+        permanent.detach(false);
+        reset();
+    }
+    void close() {
+        permanent.detach(true);
+        reset();
+    }
+    private void reset() {
+        owned.clear(); attached = null; world = null; revision = -1; scoutVisibility = null;
     }
     boolean captureDeletions(SightingStore store) {
         if (world == null || attached == null || owned.isEmpty()) return false;
@@ -32,6 +40,22 @@ final class XaeroBridge {
         if (changed) permanent.changed();
         return changed;
     }
+    void setScoutVisibility(String dimension, boolean visible) {
+        var session = XaeroMinimapSession.getCurrentSession();
+        if (session == null) { clear(); return; }
+        var manager = session.getMinimapProcessor().getSession().getWorldManager();
+        var target = manager.getAutoWorld();
+        if (target == null || target.getDimId() == null
+            || !target.getDimId().identifier().toString().equals(dimension)) { clear(); return; }
+        if (target == world && Objects.equals(scoutVisibility, visible)) return;
+        if (target != world) {
+            clear(); world = target;
+            permanent.attach(target, session.getMinimapProcessor().getSession().getWorldManagerIO());
+        }
+        for (var marker : permanent.all())
+            if (isScoutName(marker.getName())) permanent.visible(marker, visible);
+        scoutVisibility = visible; permanent.changed();
+    }
     void sync(SightingStore store, String dimension, boolean visible, int version) {
         var session = XaeroMinimapSession.getCurrentSession();
         if (session == null) { clear(); return; }
@@ -44,6 +68,7 @@ final class XaeroBridge {
         if (target == world && revision == version) return;
         if (target != world) clear();
         world = target; revision = version;
+        scoutVisibility = visible;
         permanent.attach(target, session.getMinimapProcessor().getSession().getWorldManagerIO());
         attached = target.getWaypointSet(SET);
         if (attached == null) {

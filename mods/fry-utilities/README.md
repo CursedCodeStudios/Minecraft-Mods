@@ -1,10 +1,20 @@
 # Fry Utilities
 
-Fry Utilities is a multi-purpose client-only Fabric mod for Minecraft 26.2. It combines villager trading tools, drowned equipment highlights, Slime Scout, Monument Scout, and End City Scout in one JAR.
+Fry Utilities is a multi-purpose client-only Fabric mod for Minecraft 26.2. It combines villager trading tools, storage-container JSON exports, drowned equipment highlights, No Strip protection, Slime Scout, Monument Scout, and End City Scout in one JAR.
 
-Version 1.3.0 replaces the old standalone Slime Scout, Monument Scout, and End City Scout JARs. Their commands and existing data under `config/slime-scout`, `config/monument-scout`, and `config/end-city-scout` remain compatible. Remove those standalone JARs before installing this version.
+Version 1.7.1 makes No Strip aware of active Litematica placements and applies shovel path gating only inside those placements. It also includes master switches for Slime Scout, Monument Scout, and End City Scout, storage-container JSON exports, independent scout chat controls, and the Xaero dimension-change fix. Version 1.3.0 replaced the old standalone scout JARs. Existing scout data remains compatible. Remove the standalone No Strip and scout JARs before installing this version.
 
-When Mod Menu is installed, use **Mods > Fry Utilities > Configure** to enable or disable villager outlines, enchanted-book labels, nautilus-shell highlights, and trident highlights, or to change the villager display range from its 20-block default. Mod Menu is optional. Settings are stored in `config/fry-utilities/settings.json`.
+When Mod Menu is installed, use **Mods > Fry Utilities > Configure** to enable or disable villager outlines, enchanted-book labels, nautilus-shell highlights, trident highlights, and the container-export button, or to change the villager display range from its 20-block default. The **No Strip** page controls tool-transformation protection and its action-bar feedback. The **Scouts** page has a master switch for each merged scout; disabling one stops its scanning and observations and hides its Xaero markers while retaining saved records. The **Scout chat** page independently controls automatic messages. Scout command replies remain visible when an automatic-message switch is off. Mod Menu is optional. Settings are stored in `config/fry-utilities/settings.json`.
+
+## Container JSON exports
+
+Chest, barrel, Ender Chest, shulker-box, hopper, dispenser, and dropper screens show a compact **J** button beside the player-inventory label, clear of Inventory Profiles Next's controls. Clicking it writes the container slots to `config/fry-utilities/container-exports/<timestamp>-<container>.json` and adds a clickable **Open JSON** shortcut to local chat. The message is never sent to the server.
+
+Each occupied slot records its zero-based slot number, item ID, display and base names, count, component count, applied or stored enchantment IDs/names/levels, and durability as remaining, maximum, damage, and percentage. Player-inventory slots shown below the container are excluded.
+
+## No Strip
+
+No Strip protection is enabled by default. It prevents accidental log stripping, copper scraping and unwaxing without blocking ordinary axe or shovel use such as extinguishing campfires. When Litematica is installed and an enabled placement covers the clicked block, shovel path creation is allowed only where that schematic expects a dirt path. Shovel path gating is inactive without Litematica and outside enabled schematic placements. Press the **Toggle No Strip Protection** keybind (`Y` by default) to allow or block these protections. The key can be reassigned under **Options > Controls > Key Binds > Fry Utilities - No Strip**, and the choice is saved immediately.
 
 ## Villager trading
 
@@ -31,7 +41,7 @@ When both hands contain highlighted items, the main-hand item determines the out
 
 ## Merged scouts
 
-All three scouts start automatically and keep their existing commands:
+All three scouts are enabled by default and keep their existing commands:
 
 - [Slime Scout](docs/slime-scout.md): slime sightings, split filtering, dismissed chunks, and `/slimescout`.
 - [Monument Scout](docs/monument-scout.md): sponge and elder surveys with `/monumentscout`.

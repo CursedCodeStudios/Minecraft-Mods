@@ -22,6 +22,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.timeline.Timelines;
+import dev.frydae.nostrip.NoStrip;
+import dev.frydae.utilities.container.ContainerExporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
@@ -45,6 +47,8 @@ public final class FryUtilities implements ClientModInitializer {
         catch (IOException ex) {
             LOG.error("Cannot open Fry Utilities settings", ex);
         }
+        NoStrip.initialize();
+        ContainerExporter.initialize();
         ClientTickEvents.END_CLIENT_TICK.register(FryUtilities::tick);
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> save());
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> dispatcher.register(
@@ -170,6 +174,18 @@ public final class FryUtilities implements ClientModInitializer {
 
     public static FryUtilitiesConfig config() { return config; }
 
+    public static boolean setNoStripProtection(boolean enabled) {
+        var next = config.copy();
+        next.setNoStripProtection(enabled);
+        try {
+            applyConfig(next);
+            return true;
+        } catch (IOException ex) {
+            reportConfigSaveFailure(ex);
+            return false;
+        }
+    }
+
     public static void applyConfig(FryUtilitiesConfig next) throws IOException {
         next.save(CONFIG_FILE);
         config = next.copy();
@@ -209,7 +225,8 @@ public final class FryUtilities implements ClientModInitializer {
             + " villagers; " + highlights + " are marked for villager highlighting; " + estimates
             + " villager highlights currently use workstation restock estimates. Middle-click a trade row to star it; "
             + "Shift-middle-click a starred row to mark it for highlighting; Shift-click trades repeatedly; "
-            + "Ctrl-click uses vanilla behavior.");
+            + "Ctrl-click uses vanilla behavior. No Strip protection is "
+            + (config.noStripProtection() ? "enabled." : "disabled."));
     }
 
     private static int restockPeriod(Minecraft client) {

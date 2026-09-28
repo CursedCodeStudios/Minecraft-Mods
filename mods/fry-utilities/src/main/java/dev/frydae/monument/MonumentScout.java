@@ -1,6 +1,7 @@
 package dev.frydae.monument;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import dev.frydae.utilities.FryUtilities;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.*;
@@ -30,12 +31,12 @@ public final class MonumentScout implements ClientModInitializer {
     private String context = "", dimension = "";
     private long tick, saveRetry;
     private int revision;
-    private boolean markers = true;
+    private boolean markers = true, suspended;
 
     @Override public void onInitializeClient() {
         if (FabricLoader.getInstance().isModLoaded("xaerominimap")) xaero = new XaeroBridge();
         ClientTickEvents.END_CLIENT_TICK.register(this::tick);
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> { saveRetry = 0; save(); if (xaero != null) xaero.clear(); });
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> { saveRetry = 0; save(); if (xaero != null) xaero.close(); });
         ClientChunkEvents.CHUNK_UNLOAD.register((world, chunk) -> {
             if (world != level || store == null) return;
             var pos = chunk.getPos();
@@ -68,6 +69,8 @@ public final class MonumentScout implements ClientModInitializer {
     }
 
     private void tick(Minecraft client) {
+        if (!FryUtilities.config().monumentScoutEnabled()) { suspend(client); return; }
+        if (suspended) { suspended = false; setScoutVisibility(client, true); }
         if (client.level == null || client.player == null) {
             if (store != null || !context.isEmpty()) { if (!save()) return; reset(); }
             return;
@@ -88,7 +91,7 @@ public final class MonumentScout implements ClientModInitializer {
                 store = new MonumentStore(FabricLoader.getInstance().getConfigDir().resolve("monument-scout"), world, dim);
             } catch (IOException ex) {
                 LOG.error("Cannot open monument records", ex);
-                say("Cannot open saved monuments; tracking disabled for this world. See latest.log.");
+                announce("Cannot open saved monuments; tracking disabled for this world. See latest.log.");
             }
         }
         if (store == null) return;
@@ -135,7 +138,7 @@ public final class MonumentScout implements ClientModInitializer {
                 var old = entry.state();
                 store.update(entry, survey.sponges(), count, System.currentTimeMillis());
                 revision++;
-                if (entry.state() != old) say(entry.label() + " at " + entry.centerX + ", " + entry.centerZ);
+                if (entry.state() != old) announce(entry.label() + " at " + entry.centerX + ", " + entry.centerZ);
                 nextSurvey.put(survey.bounds().key(), tick + 100);
                 survey = null;
             }
@@ -146,8 +149,25 @@ public final class MonumentScout implements ClientModInitializer {
             catch (RuntimeException | LinkageError ex) {
                 LOG.error("Xaero integration failed", ex);
                 try { xaero.clear(); } catch (RuntimeException | LinkageError ignored) { }
-                xaero = null; say("Xaero integration unavailable; monument tracking continues. See latest.log.");
+                xaero = null; announce("Xaero integration unavailable; monument tracking continues. See latest.log.");
             }
+        }
+    }
+
+    private void suspend(Minecraft client) {
+        if (!suspended) {
+            if (!save()) return;
+            reset(); suspended = true;
+        }
+        setScoutVisibility(client, false);
+    }
+    private void setScoutVisibility(Minecraft client, boolean visible) {
+        if (xaero == null || client.level == null) return;
+        try { xaero.setScoutVisibility(client.level.dimension().identifier().toString(), visible); }
+        catch (RuntimeException | LinkageError ex) {
+            LOG.error("Cannot change Monument Scout waypoint visibility", ex);
+            try { xaero.clear(); } catch (RuntimeException | LinkageError ignored) { }
+            xaero = null;
         }
     }
 
@@ -164,8 +184,10 @@ public final class MonumentScout implements ClientModInitializer {
     }
     private void discover(MonumentBounds bounds, boolean manual) {
         if (store.discover(bounds, manual, System.currentTimeMillis())) {
-            revision++; say("Monument recorded at " + bounds.centerX() + ", " + bounds.centerZ() + "; survey pending.");
-        } else say("This monument is already recorded.");
+            revision++;
+            String message = "Monument recorded at " + bounds.centerX() + ", " + bounds.centerZ() + "; survey pending.";
+            if (manual) say(message); else announce(message);
+        } else if (manual) say("This monument is already recorded.");
     }
     private static int countElders(MonumentBounds bounds, List<net.minecraft.world.entity.Entity> elders) {
         return (int) elders.stream().filter(e -> bounds.containsElder(e.getX(), e.getY(), e.getZ())).count();
@@ -181,12 +203,15 @@ public final class MonumentScout implements ClientModInitializer {
         try { store.save(); saveRetry = 0; return true; }
         catch (IOException ex) {
             LOG.error("Cannot save monuments; retaining data in memory", ex);
-            if (saveRetry == 0) say("Cannot save monuments; retrying. See latest.log.");
+            if (saveRetry == 0) announce("Cannot save monuments; retrying. See latest.log.");
             saveRetry = System.currentTimeMillis() + 5000;
             return false;
         }
     }
     private void status() {
+        if (!FryUtilities.config().monumentScoutEnabled()) {
+            say("Disabled in Fry Utilities settings."); return;
+        }
         say((store == null ? 0 : store.entries().size()) + " monuments recorded in this world. "
             + "Commands: here, scan, markers, mark <centerX> <centerZ>. Xaero: "
             + (xaero == null ? "unavailable" : markers ? "shown" : "hidden"));
@@ -207,6 +232,9 @@ public final class MonumentScout implements ClientModInitializer {
     private static void say(String text) {
         var player = Minecraft.getInstance().player;
         if (player != null) player.sendSystemMessage(Component.literal("[Monument Scout] " + text));
+    }
+    private static void announce(String text) {
+        if (FryUtilities.config().monumentScoutEnabled() && FryUtilities.config().monumentScoutChat()) say(text);
     }
 
     private static final class WorldReader implements MonumentSurvey.Reader, MonumentSignature.Reader {

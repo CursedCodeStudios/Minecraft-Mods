@@ -9,7 +9,7 @@ A client-side feature in Fry Utilities for **Minecraft Java 26.2**. Walk, explor
 3. Install [Fabric API for 26.2](https://modrinth.com/mod/fabric-api).
 4. For map markers, install [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) for 26.2 (integration compiled against **26.5.1**) and its required dependencies. Add [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map) for full-map display. World Map alone does not provide the waypoint API this mod uses.
 
-Tracking starts automatically. The mod only sees entities loaded on your client, including slimes behind walls; it does not inspect unloaded chunks or query the server seed. Magma cubes are excluded.
+Tracking is enabled by default and can be disabled from Fry Utilities' **Scouts** settings page. The mod only sees entities loaded on your client, including slimes behind walls; it does not inspect unloaded chunks or query the server seed. Magma cubes are excluded.
 
 ## Markers
 

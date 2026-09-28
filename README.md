@@ -1,6 +1,6 @@
 # Minecraft Mod Suite
 
-A multi-project Fabric workspace for Minecraft 26.2. Each produced mod is independently installable; the suite shares build conventions and releases all modules at one version. Fry Utilities contains villager trading, drowned highlights, Slime Scout, Monument Scout, and End City Scout. Bedrock Scout and Seed Scout remain separate mods. The merged scouts retain their commands and saved-data locations.
+A multi-project Fabric workspace for Minecraft 26.2. Each produced mod is independently installable; the suite shares build conventions and releases all modules at one version. Fry Utilities contains villager trading, container JSON exports, drowned highlights, No Strip protection, Slime Scout, Monument Scout, and End City Scout. Bedrock Scout and Seed Scout remain separate mods. The merged scouts retain their commands and saved-data locations.
 
 ## Layout
 
@@ -39,7 +39,7 @@ Only copy regular mod JARs into Minecraft's `mods` directory; do not install sou
 
 The three scouts inside Fry Utilities and the separate Bedrock Scout use the shared **Minecraft Scouts** Xaero waypoint set. Each scout manages its own markers, so its marker toggle does not hide another scout's markers.
 
-Scout waypoints are permanent Xaero records. They are saved on changes (at most once every five seconds) and on detach/shutdown, remain after leaving a dimension, and are reused by generated name prefix and horizontal position on reconnect, including markers moved to another set. Keep their generated names/positions for automatic reuse; renaming or moving their coordinates between sessions can leave a separate user marker when the scout regenerates its own. Marker hide commands change visibility without deleting records. Scout data remains the source for survey/status updates; deleting a Slime Scout marker while its scout is active still dismisses that chunk.
+Scout waypoints are permanent Xaero records. They are saved on changes (at most once every five seconds) and on shutdown, remain after leaving a dimension, and are reused by generated name prefix and horizontal position on reconnect, including markers moved to another set. During a dimension change the scouts let Xaero handle its own world transition instead of forcing another synchronous save. Keep their generated names/positions for automatic reuse; renaming or moving their coordinates between sessions can leave a separate user marker when the scout regenerates its own. Marker hide commands change visibility without deleting records. Scout data remains the source for survey/status updates; deleting a Slime Scout marker while its scout is active still dismisses that chunk.
 
 ## Continuous integration
 
@@ -86,4 +86,4 @@ $env:GRADLE_USER_HOME = "$PWD/.gradle-user-home"
 
 Normal checkouts only need JDK 25 and the committed wrapper; Gradle resolves the other dependencies. Xaero is compile-only for Fry Utilities and Bedrock Scout and is not bundled.
 
-Fry Utilities is a full in-project rewrite of Villager Trading Plus with persistent starred trades and separate highlight markers. Middle-click stars a trade for labels; Shift-middle-click marks a starred trade for the villager outline. Only an available trade with both states makes its villager glow green. It also replaces Nautilus Scout and now contains Slime Scout, Monument Scout, and End City Scout. Remove all five superseded standalone JARs before installing Fry Utilities 1.3.0 or newer.
+Fry Utilities is a full in-project rewrite of Villager Trading Plus with persistent starred trades and separate highlight markers. Middle-click stars a trade for labels; Shift-middle-click marks a starred trade for the villager outline. Only an available trade with both states makes its villager glow green. It also replaces Nautilus Scout and No Strip and contains Slime Scout, Monument Scout, and End City Scout. Version 1.7.1 gates shovel paths only inside enabled Litematica placements and only when the schematic expects another block. It also includes master switches for each merged scout and client-side JSON exports for storage containers. Remove all superseded standalone JARs before installing it.

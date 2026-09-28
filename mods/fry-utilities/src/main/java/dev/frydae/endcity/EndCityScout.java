@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
+import dev.frydae.utilities.FryUtilities;
 import dev.frydae.endcity.CitySignature.Pos;
 import dev.frydae.endcity.CityStore.Presence;
 
@@ -30,12 +31,12 @@ public final class EndCityScout implements ClientModInitializer {
     private String context = "", dimension = "";
     private long tick, surveyedTick, retry;
     private int revision;
-    private boolean markers = true;
+    private boolean markers = true, suspended;
 
     @Override public void onInitializeClient() {
         if (FabricLoader.getInstance().isModLoaded("xaerominimap")) xaero = new XaeroBridge();
         ClientTickEvents.END_CLIENT_TICK.register(this::tick);
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> { retry = 0; save(); if (xaero != null) xaero.clear(); });
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> { retry = 0; save(); if (xaero != null) xaero.close(); });
         ClientChunkEvents.CHUNK_UNLOAD.register((world, chunk) -> {
             if (world != level || store == null) return;
             if (scanning != null) scanning.invalidate();
@@ -68,6 +69,8 @@ public final class EndCityScout implements ClientModInitializer {
     }
 
     private void tick(Minecraft client) {
+        if (!FryUtilities.config().endCityScoutEnabled()) { suspend(client); return; }
+        if (suspended) { suspended = false; setScoutVisibility(client, true); }
         if (client.level == null || client.player == null) {
             if (!context.isEmpty() && save()) reset();
             return;
@@ -86,7 +89,7 @@ public final class EndCityScout implements ClientModInitializer {
             try { store = new CityStore(FabricLoader.getInstance().getConfigDir().resolve("end-city-scout"), world, dim); }
             catch (IOException ex) {
                 LOG.error("Cannot open End city records", ex);
-                say("Cannot open saved cities; tracking disabled for this world. See latest.log.");
+                announce("Cannot open saved cities; tracking disabled for this world. See latest.log.");
             }
         }
         if (store == null) return;
@@ -95,8 +98,8 @@ public final class EndCityScout implements ClientModInitializer {
         int oldCities = store.cities().size(), oldShips = store.ships().size();
         if (scanning.advance()) {
             revision++; surveyed = null;
-            if (store.cities().size() > oldCities) say("End city recorded. Use /endcityscout here for its survey.");
-            if (store.ships().size() > oldShips) say("End ship found; checking its elytra item frame.");
+            if (store.cities().size() > oldCities) announce("End city recorded. Use /endcityscout here for its survey.");
+            if (store.ships().size() > oldShips) announce("End ship found; checking its elytra item frame.");
         }
         if (scanning.complete()) {
             surveyed = scanning; surveyedTick = tick; scanning = null;
@@ -111,8 +114,24 @@ public final class EndCityScout implements ClientModInitializer {
             catch (RuntimeException | LinkageError ex) {
                 LOG.error("Xaero integration failed", ex);
                 try { xaero.clear(); } catch (RuntimeException | LinkageError ignored) { }
-                xaero = null; say("Xaero unavailable; city tracking continues. See latest.log.");
+                xaero = null; announce("Xaero unavailable; city tracking continues. See latest.log.");
             }
+        }
+    }
+    private void suspend(Minecraft client) {
+        if (!suspended) {
+            if (!save()) return;
+            reset(); suspended = true;
+        }
+        setScoutVisibility(client, false);
+    }
+    private void setScoutVisibility(Minecraft client, boolean visible) {
+        if (xaero == null || client.level == null) return;
+        try { xaero.setScoutVisibility(client.level.dimension().identifier().toString(), visible); }
+        catch (RuntimeException | LinkageError ex) {
+            LOG.error("Cannot change End City Scout waypoint visibility", ex);
+            try { xaero.clear(); } catch (RuntimeException | LinkageError ignored) { }
+            xaero = null;
         }
     }
     private void observe(Minecraft client) {
@@ -170,11 +189,14 @@ public final class EndCityScout implements ClientModInitializer {
         try { store.save(); retry = 0; return true; }
         catch (IOException ex) {
             LOG.error("Cannot save cities; retaining records in memory", ex);
-            if (retry == 0) say("Cannot save cities; retrying. See latest.log.");
+            if (retry == 0) announce("Cannot save cities; retrying. See latest.log.");
             retry = System.currentTimeMillis() + 5000; return false;
         }
     }
     private void status() {
+        if (!FryUtilities.config().endCityScoutEnabled()) {
+            say("Disabled in Fry Utilities settings."); return;
+        }
         say((store == null ? 0 : store.cities().size()) + " cities and " + (store == null ? 0 : store.ships().size())
             + " ships recorded. Commands: here, scan, markers, mark <centerX> <centerZ>. Xaero: "
             + (xaero == null ? "unavailable" : markers ? "shown" : "hidden"));
@@ -201,5 +223,8 @@ public final class EndCityScout implements ClientModInitializer {
     private static void say(String text) {
         var player = Minecraft.getInstance().player;
         if (player != null) player.sendSystemMessage(Component.literal("[End City Scout] " + text));
+    }
+    private static void announce(String text) {
+        if (FryUtilities.config().endCityScoutEnabled() && FryUtilities.config().endCityScoutChat()) say(text);
     }
 }

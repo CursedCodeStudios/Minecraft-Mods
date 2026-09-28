@@ -62,11 +62,13 @@ final class PermanentWaypoints {
             nextSave = System.currentTimeMillis() + 5000;
         }
     }
-    void detach() {
+    void detach(boolean flush) {
         hidden.forEach(Waypoint::setDisabled);
         if (!hidden.isEmpty()) dirty = true;
         hidden.clear();
-        save(true);
+        // Xaero changes its active world during a dimension transfer. Saving the
+        // previous world from that transition callback can block its own switch.
+        if (flush) save(true);
         world = null; saver = null; dirty = false; nextSave = 0;
     }
 }
