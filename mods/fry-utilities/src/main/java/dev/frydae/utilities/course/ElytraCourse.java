@@ -29,6 +29,7 @@ public final class ElytraCourse {
     private static final double MAX_TICK_JUMP_SQUARED = 12 * 12;
     private static final int MAX_FLIGHT_TICKS = 20 * 60 * 20;
     private static final int MAX_POINTS = 4_000;
+    private static final double GUIDE_LOOKAHEAD_BLOCKS = 20;
     private static final int FORWARD_COLOR = 0xFF42E5FF;
     private static final int REVERSE_COLOR = 0xFFFFC857;
     private static CourseStore store;
@@ -344,15 +345,17 @@ public final class ElytraCourse {
         if (store == null || client.level == null || client.player == null
             || !FryUtilities.config().elytraCourseEnabled()) return;
         Vec3 camera = client.gameRenderer.mainCamera().position();
+        Vec3 position = client.player.position();
+        var player = new CourseGraph.Point(position.x(), position.y(), position.z(), 0);
         for (var shown : visible) {
             var pair = courses.get(key(shown.name()));
             if (pair == null) continue;
             List<CourseGraph.Point> points = pair.guide(shown.fromA());
             boolean unmeasuredReverse = pair.get(shown.fromA()) == null;
             int color = shown.fromA() ? FORWARD_COLOR : REVERSE_COLOR;
-            for (int i = 1; i < points.size(); i++) {
-                var a = points.get(i - 1); var b = points.get(i);
-                if (distanceSquared(camera, a) > 192 * 192 && distanceSquared(camera, b) > 192 * 192) continue;
+            var window = CourseWindow.ahead(points, player, GUIDE_LOOKAHEAD_BLOCKS);
+            for (int i = 1; i < window.size(); i++) {
+                var a = window.get(i - 1); var b = window.get(i);
                 Gizmos.line(new Vec3(a.x(), a.y(), a.z()), new Vec3(b.x(), b.y(), b.z()), color, 4.0f)
                     .setAlwaysOnTop();
             }
@@ -368,10 +371,6 @@ public final class ElytraCourse {
                     .setAlwaysOnTop();
             }
         }
-    }
-    private static double distanceSquared(Vec3 camera, CourseGraph.Point point) {
-        double dx = camera.x() - point.x(), dy = camera.y() - point.y(), dz = camera.z() - point.z();
-        return dx * dx + dy * dy + dz * dz;
     }
     private static void say(String text) {
         var player = Minecraft.getInstance().player;
