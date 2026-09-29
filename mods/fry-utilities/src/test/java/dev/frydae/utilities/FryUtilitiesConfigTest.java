@@ -19,6 +19,7 @@ class FryUtilitiesConfigTest {
         assertTrue(defaults.noStripProtection());
         assertTrue(defaults.noStripFeedback());
         assertTrue(defaults.containerExportButton());
+        assertTrue(defaults.elytraCourseEnabled());
         assertTrue(defaults.slimeScoutEnabled());
         assertTrue(defaults.monumentScoutEnabled());
         assertTrue(defaults.endCityScoutEnabled());
@@ -34,6 +35,7 @@ class FryUtilitiesConfigTest {
         defaults.setNoStripProtection(false);
         defaults.setNoStripFeedback(false);
         defaults.setContainerExportButton(false);
+        defaults.setElytraCourseEnabled(false);
         defaults.setSlimeScoutEnabled(false);
         defaults.setMonumentScoutEnabled(false);
         defaults.setEndCityScoutEnabled(false);
@@ -51,6 +53,7 @@ class FryUtilitiesConfigTest {
         assertFalse(loaded.noStripProtection());
         assertFalse(loaded.noStripFeedback());
         assertFalse(loaded.containerExportButton());
+        assertFalse(loaded.elytraCourseEnabled());
         assertFalse(loaded.slimeScoutEnabled());
         assertFalse(loaded.monumentScoutEnabled());
         assertFalse(loaded.endCityScoutEnabled());
@@ -69,6 +72,7 @@ class FryUtilitiesConfigTest {
         assertTrue(loaded.noStripProtection());
         assertTrue(loaded.noStripFeedback());
         assertTrue(loaded.containerExportButton());
+        assertTrue(loaded.elytraCourseEnabled());
         assertTrue(loaded.slimeScoutEnabled());
         assertTrue(loaded.monumentScoutEnabled());
         assertTrue(loaded.endCityScoutEnabled());

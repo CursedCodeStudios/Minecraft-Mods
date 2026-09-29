@@ -24,6 +24,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.timeline.Timelines;
 import dev.frydae.nostrip.NoStrip;
 import dev.frydae.utilities.container.ContainerExporter;
+import dev.frydae.utilities.course.ElytraCourse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
@@ -49,6 +50,7 @@ public final class FryUtilities implements ClientModInitializer {
         }
         NoStrip.initialize();
         ContainerExporter.initialize();
+        ElytraCourse.initialize();
         ClientTickEvents.END_CLIENT_TICK.register(FryUtilities::tick);
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> save());
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> dispatcher.register(

@@ -1,6 +1,6 @@
 # Minecraft Mod Suite
 
-A multi-project Fabric workspace for Minecraft 26.2. Each produced mod is independently installable; the suite shares build conventions and releases all modules at one version. Fry Utilities contains villager trading, container JSON exports, drowned highlights, No Strip protection, Slime Scout, Monument Scout, and End City Scout. Bedrock Scout and Seed Scout remain separate mods. The merged scouts retain their commands and saved-data locations.
+A multi-project Fabric workspace for Minecraft 26.2. Each produced mod is independently installable; the suite shares build conventions and releases all modules at one version. Fry Utilities contains villager trading, container JSON exports, a learned Nether Elytra course, drowned highlights, No Strip protection, Slime Scout, Monument Scout, and End City Scout. Bedrock Scout and Seed Scout remain separate mods. The merged scouts retain their commands and saved-data locations.
 
 ## Layout
 
@@ -86,4 +86,4 @@ $env:GRADLE_USER_HOME = "$PWD/.gradle-user-home"
 
 Normal checkouts only need JDK 25 and the committed wrapper; Gradle resolves the other dependencies. Xaero is compile-only for Fry Utilities and Bedrock Scout and is not bundled.
 
-Fry Utilities is a full in-project rewrite of Villager Trading Plus with persistent starred trades and separate highlight markers. Middle-click stars a trade for labels; Shift-middle-click marks a starred trade for the villager outline. Only an available trade with both states makes its villager glow green. It also replaces Nautilus Scout and No Strip and contains Slime Scout, Monument Scout, and End City Scout. Version 1.7.1 gates shovel paths only inside enabled Litematica placements and only when the schematic expects another block. It also includes master switches for each merged scout and client-side JSON exports for storage containers. Remove all superseded standalone JARs before installing it.
+Fry Utilities is a full in-project rewrite of Villager Trading Plus with persistent starred trades and separate highlight markers. Middle-click stars a trade for labels; Shift-middle-click marks a starred trade for the villager outline. Only an available trade with both states makes its villager glow green. It also replaces Nautilus Scout and No Strip and contains Slime Scout, Monument Scout, and End City Scout. Version 1.8.0 adds a locally learned Nether Elytra course: set endpoints with `/elytracourse a` and `/elytracourse b`, then glide between them to build a floating line from the quickest observed route. Remove all superseded standalone JARs before installing it.

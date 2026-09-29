@@ -1,10 +1,18 @@
 # Fry Utilities
 
-Fry Utilities is a multi-purpose client-only Fabric mod for Minecraft 26.2. It combines villager trading tools, storage-container JSON exports, drowned equipment highlights, No Strip protection, Slime Scout, Monument Scout, and End City Scout in one JAR.
+Fry Utilities is a multi-purpose client-only Fabric mod for Minecraft 26.2. It combines villager trading tools, storage-container JSON exports, Nether Elytra course learning, drowned equipment highlights, No Strip protection, Slime Scout, Monument Scout, and End City Scout in one JAR.
 
-Version 1.7.1 makes No Strip aware of active Litematica placements and applies shovel path gating only inside those placements. It also includes master switches for Slime Scout, Monument Scout, and End City Scout, storage-container JSON exports, independent scout chat controls, and the Xaero dimension-change fix. Version 1.3.0 replaced the old standalone scout JARs. Existing scout data remains compatible. Remove the standalone No Strip and scout JARs before installing this version.
+Version 1.8.0 adds a learned Nether Elytra course. Version 1.7.1 made No Strip aware of active Litematica placements. Version 1.3.0 replaced the old standalone scout JARs. Existing scout data remains compatible. Remove the standalone No Strip and scout JARs before installing this version.
 
 When Mod Menu is installed, use **Mods > Fry Utilities > Configure** to enable or disable villager outlines, enchanted-book labels, nautilus-shell highlights, trident highlights, and the container-export button, or to change the villager display range from its 20-block default. The **No Strip** page controls tool-transformation protection and its action-bar feedback. The **Scouts** page has a master switch for each merged scout; disabling one stops its scanning and observations and hides its Xaero markers while retaining saved records. The **Scout chat** page independently controls automatic messages. Scout command replies remain visible when an automatic-message switch is off. Mod Menu is optional. Settings are stored in `config/fry-utilities/settings.json`.
+
+## Nether Elytra course
+
+In the Nether, stand at the first endpoint and run `/elytracourse a`, then stand at the second and run `/elytracourse b`. You can also specify exact coordinates with `/elytracourse a <x> <y> <z>` and `/elytracourse b <x> <y> <z>`. The endpoints must be at least 32 blocks apart. While wearing and using an Elytra, glide from within 14 blocks of one endpoint to within 14 blocks of the other. A completed flight is saved automatically. The opposite direction is learned separately.
+
+The mod keeps up to eight completed trips per direction and estimates the quickest course from their recorded travel times. It can combine faster stretches of separate trips where the recorded flight centers pass through nearly the same block and travel in the same direction. It never invents a long shortcut between tracks. A cyan line shows the A-to-B course and an amber line shows B-to-A, switching when you start a flight near either endpoint. The line is drawn in the world near you, so you can follow its bends through the Nether. The first completed trip gives a usable line; repeated trips can improve it. The estimate is based on your observed flying, and cannot certify that an unflown alternative is safe or faster.
+
+`/elytracourse` reports endpoint, run, and estimated-time status. `/elytracourse clear` removes recorded flights but keeps endpoints. `/elytracourse off` and `/elytracourse on` pause or resume recording and the line; the **Elytra course** Mod Menu page has the same switch. Changing an endpoint clears its old flights. Each server or singleplayer world has its own local course file under `config/fry-utilities`; route data is never sent to the server. Flights stop recording if Elytra gliding ends or a position jump occurs.
 
 ## Container JSON exports
 

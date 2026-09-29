@@ -3,7 +3,7 @@
   "id": "fryutilities",
   "version": "${version}",
   "name": "Fry Utilities",
-  "description": "Villager trading tools, container JSON exports, entity highlights, No Strip protection, and structure scouts.",
+  "description": "Villager trading tools, container JSON exports, Elytra course learning, entity highlights, No Strip protection, and structure scouts.",
   "environment": "client",
   "entrypoints": {
     "client": [

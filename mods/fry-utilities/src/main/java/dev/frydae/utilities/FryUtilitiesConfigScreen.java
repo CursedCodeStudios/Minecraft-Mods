@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 public final class FryUtilitiesConfigScreen extends Screen {
     private static final List<Integer> RANGES = List.of(4, 8, 12, 16, 20, 24, 32, 48, 64);
     private enum Page {
-        FEATURES("Features"), NO_STRIP("No Strip"), SCOUTS("Scouts"), SCOUT_CHAT("Scout chat");
+        FEATURES("Features"), NO_STRIP("No Strip"), SCOUTS("Scouts"), SCOUT_CHAT("Scout chat"), COURSE("Elytra course");
         private final String label;
         Page(String label) { this.label = label; }
     }
@@ -35,7 +35,7 @@ public final class FryUtilitiesConfigScreen extends Screen {
 
         addRenderableOnly(new StringWidget(left, top, contentWidth, 20, title, font));
         addRenderableWidget(CycleButton.builder(value -> Component.literal(value.label), page)
-            .withValues(List.of(Page.FEATURES, Page.NO_STRIP, Page.SCOUTS, Page.SCOUT_CHAT))
+            .withValues(List.of(Page.FEATURES, Page.NO_STRIP, Page.SCOUTS, Page.SCOUT_CHAT, Page.COURSE))
             .create(buttonLeft, top + 24, buttonWidth, 20, Component.literal("Settings page"),
                 (button, selected) -> { page = selected; rebuildWidgets(); }));
 
@@ -43,7 +43,8 @@ public final class FryUtilitiesConfigScreen extends Screen {
         if (page == Page.FEATURES) addFeatureSettings(buttonLeft, buttonWidth, y);
         else if (page == Page.NO_STRIP) addNoStripSettings(left, contentWidth, buttonLeft, buttonWidth, y);
         else if (page == Page.SCOUTS) addScoutSettings(left, contentWidth, buttonLeft, buttonWidth, y);
-        else addScoutChatSettings(left, contentWidth, buttonLeft, buttonWidth, y);
+        else if (page == Page.SCOUT_CHAT) addScoutChatSettings(left, contentWidth, buttonLeft, buttonWidth, y);
+        else addCourseSettings(left, contentWidth, buttonLeft, buttonWidth, y);
 
         int footerY = height - 28;
         int smallWidth = (buttonWidth - 8) / 3;
@@ -108,6 +109,16 @@ public final class FryUtilitiesConfigScreen extends Screen {
         var description = new MultiLineTextWidget(left, y,
             Component.literal("These switches mute automatic scout announcements. Command replies stay visible."), font)
             .setMaxWidth(contentWidth).setCentered(true).setMaxRows(3);
+        addRenderableOnly(description);
+    }
+
+    private void addCourseSettings(int left, int contentWidth, int buttonLeft, int buttonWidth, int y) {
+        addToggle(buttonLeft, y, buttonWidth, "Elytra course recording and line", draft.elytraCourseEnabled(),
+            draft::setElytraCourseEnabled);
+        y += 34;
+        var description = new MultiLineTextWidget(left, y,
+            Component.literal("In the Nether, use /elytracourse a and /elytracourse b to set endpoints. Glide between them to record trips. The quickest learned route appears as a floating line. /elytracourse shows status and options."), font)
+            .setMaxWidth(contentWidth).setCentered(true).setMaxRows(5);
         addRenderableOnly(description);
     }
 

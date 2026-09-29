@@ -23,6 +23,7 @@ public final class FryUtilitiesConfig {
     private boolean noStripProtection;
     private boolean noStripFeedback;
     private boolean containerExportButton;
+    private boolean elytraCourseEnabled;
     private boolean slimeScoutEnabled;
     private boolean monumentScoutEnabled;
     private boolean endCityScoutEnabled;
@@ -33,7 +34,7 @@ public final class FryUtilitiesConfig {
 
     private FryUtilitiesConfig(boolean villagerHighlights, boolean enchantedBookLabels,
         boolean nautilusHighlights, boolean tridentHighlights, boolean noStripProtection,
-        boolean noStripFeedback, boolean containerExportButton, boolean slimeScoutEnabled,
+        boolean noStripFeedback, boolean containerExportButton, boolean elytraCourseEnabled, boolean slimeScoutEnabled,
         boolean monumentScoutEnabled, boolean endCityScoutEnabled, boolean slimeScoutChat,
         boolean monumentScoutChat, boolean endCityScoutChat,
         int villagerRange) {
@@ -44,6 +45,7 @@ public final class FryUtilitiesConfig {
         this.noStripProtection = noStripProtection;
         this.noStripFeedback = noStripFeedback;
         this.containerExportButton = containerExportButton;
+        this.elytraCourseEnabled = elytraCourseEnabled;
         this.slimeScoutEnabled = slimeScoutEnabled;
         this.monumentScoutEnabled = monumentScoutEnabled;
         this.endCityScoutEnabled = endCityScoutEnabled;
@@ -54,7 +56,7 @@ public final class FryUtilitiesConfig {
     }
 
     public static FryUtilitiesConfig defaults() {
-        return new FryUtilitiesConfig(true, true, true, true, true, true, true,
+        return new FryUtilitiesConfig(true, true, true, true, true, true, true, true,
             true, true, true, true, true, true, DEFAULT_RANGE);
     }
 
@@ -72,6 +74,7 @@ public final class FryUtilitiesConfig {
                 readBoolean(root, "noStripProtection", true),
                 readBoolean(root, "noStripFeedback", true),
                 readBoolean(root, "containerExportButton", true),
+                readBoolean(root, "elytraCourseEnabled", true),
                 readBoolean(root, "slimeScoutEnabled", true),
                 readBoolean(root, "monumentScoutEnabled", true),
                 readBoolean(root, "endCityScoutEnabled", true),
@@ -94,6 +97,7 @@ public final class FryUtilitiesConfig {
         root.addProperty("noStripProtection", noStripProtection);
         root.addProperty("noStripFeedback", noStripFeedback);
         root.addProperty("containerExportButton", containerExportButton);
+        root.addProperty("elytraCourseEnabled", elytraCourseEnabled);
         root.addProperty("slimeScoutEnabled", slimeScoutEnabled);
         root.addProperty("monumentScoutEnabled", monumentScoutEnabled);
         root.addProperty("endCityScoutEnabled", endCityScoutEnabled);
@@ -114,6 +118,7 @@ public final class FryUtilitiesConfig {
     public FryUtilitiesConfig copy() {
         return new FryUtilitiesConfig(villagerHighlights, enchantedBookLabels,
             nautilusHighlights, tridentHighlights, noStripProtection, noStripFeedback, containerExportButton,
+            elytraCourseEnabled,
             slimeScoutEnabled, monumentScoutEnabled, endCityScoutEnabled, slimeScoutChat, monumentScoutChat,
             endCityScoutChat, villagerRange);
     }
@@ -125,6 +130,7 @@ public final class FryUtilitiesConfig {
     public boolean noStripProtection() { return noStripProtection; }
     public boolean noStripFeedback() { return noStripFeedback; }
     public boolean containerExportButton() { return containerExportButton; }
+    public boolean elytraCourseEnabled() { return elytraCourseEnabled; }
     public boolean slimeScoutEnabled() { return slimeScoutEnabled; }
     public boolean monumentScoutEnabled() { return monumentScoutEnabled; }
     public boolean endCityScoutEnabled() { return endCityScoutEnabled; }
@@ -141,6 +147,7 @@ public final class FryUtilitiesConfig {
     void setNoStripProtection(boolean value) { noStripProtection = value; }
     void setNoStripFeedback(boolean value) { noStripFeedback = value; }
     void setContainerExportButton(boolean value) { containerExportButton = value; }
+    public void setElytraCourseEnabled(boolean value) { elytraCourseEnabled = value; }
     void setSlimeScoutEnabled(boolean value) { slimeScoutEnabled = value; }
     void setMonumentScoutEnabled(boolean value) { monumentScoutEnabled = value; }
     void setEndCityScoutEnabled(boolean value) { endCityScoutEnabled = value; }
