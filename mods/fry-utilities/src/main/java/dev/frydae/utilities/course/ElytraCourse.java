@@ -37,9 +37,12 @@ public final class ElytraCourse {
     private static long tick;
     private static List<CourseGraph.Point> recording;
     private static CourseProximity.Match recordingMatch;
+    private static CourseProximity.Match armed;
+    private static long armedAt;
     private static List<CourseProximity.Match> visible = List.of();
     private record Pair(CourseGraph.Course forward, CourseGraph.Course reverse) {
         CourseGraph.Course get(boolean fromA) { return fromA ? forward : reverse; }
+        List<CourseGraph.Point> guide(boolean fromA) { return CourseGuide.points(forward, reverse, fromA); }
     }
     private static final Map<String, Pair> courses = new HashMap<>();
     private static Vec3 lastPosition;
@@ -108,23 +111,27 @@ public final class ElytraCourse {
             }
         }
         if (store == null || !FryUtilities.config().elytraCourseEnabled()) {
-            cancelRecording(); visible = List.of(); return;
+            cancelRecording(); armed = null; visible = List.of(); return;
         }
         tick++;
         Vec3 position = client.player.position();
         var sample = new CourseGraph.Point(position.x(), position.y(), position.z(), tick);
         var near = CourseProximity.nearby(store.courses(), store.selected().name(), sample);
-        if (!client.player.isAlive() || !client.player.isFallFlying()) {
+        if (!client.player.isAlive()) {
+            cancelRecording(); armed = null; visible = List.of(); return;
+        }
+        if (!client.player.isFallFlying()) {
             cancelRecording(); visible = near;
+            var match = completeMatch(near);
+            if (match != null) { armed = match; armedAt = tick; }
+            else if (armed != null && !canLaunchArmed(sample)) armed = null;
             return;
         }
         if (recording == null) {
-            var match = near.stream().filter(candidate -> {
-                var course = store.get(candidate.name());
-                return course != null && course.a() != null && course.b() != null;
-            }).findFirst().orElse(null);
+            var match = completeMatch(near);
+            if (match == null && armed != null && canLaunchArmed(sample)) match = armed;
             if (match != null) start(match, sample, position);
-            else visible = near;
+            else { armed = null; visible = near; }
             return;
         }
         visible = List.of(recordingMatch);
@@ -162,6 +169,7 @@ public final class ElytraCourse {
     }
 
     private static void start(CourseProximity.Match match, CourseGraph.Point sample, Vec3 position) {
+        armed = null;
         recordingMatch = match; visible = List.of(match);
         recording = new ArrayList<>(); recording.add(sample); lastPosition = position;
         say("Recording " + match.name() + ": "
@@ -170,6 +178,19 @@ public final class ElytraCourse {
 
     private static void cancelRecording() {
         recording = null; recordingMatch = null; lastPosition = null;
+    }
+
+    private static CourseProximity.Match completeMatch(List<CourseProximity.Match> matches) {
+        return matches.stream().filter(candidate -> {
+            var course = store.get(candidate.name());
+            return course != null && course.a() != null && course.b() != null;
+        }).findFirst().orElse(null);
+    }
+
+    private static boolean canLaunchArmed(CourseGraph.Point position) {
+        var course = armed == null ? null : store.get(armed.name());
+        var start = course == null ? null : armed.fromA() ? course.a() : course.b();
+        return CourseProximity.canLaunchFrom(start, position, tick - armedAt);
     }
 
     private static void setEndpoint(boolean first, CourseStore.Anchor specified) {
@@ -185,7 +206,7 @@ public final class ElytraCourse {
         }
         try {
             store.setAnchor(first, point);
-            cancelRecording(); visible = List.of(); recalculate(selected.name());
+            cancelRecording(); armed = null; visible = List.of(); recalculate(selected.name());
             say(selected.name() + ": " + (first ? selected.aName() : selected.bName())
                 + " set at " + coordinates(point)
                 + ". Previous flights cleared because the endpoint changed.");
@@ -199,7 +220,7 @@ public final class ElytraCourse {
         if (store == null) { say("Join the Nether first."); return; }
         try {
             String name = store.selected().name();
-            store.clearFlights(); cancelRecording(); visible = List.of(); recalculate(name);
+            store.clearFlights(); cancelRecording(); armed = null; visible = List.of(); recalculate(name);
             say(name + " flights cleared; endpoints retained.");
         } catch (IOException ex) {
             LOG.error("Cannot clear Elytra course", ex);
@@ -241,7 +262,7 @@ public final class ElytraCourse {
         if (store == null) { say("Join the Nether first."); return; }
         try {
             if (!change.run()) { say(failure); return; }
-            cancelRecording(); visible = List.of(); recalculateAll(); say(success);
+            cancelRecording(); armed = null; visible = List.of(); recalculateAll(); say(success);
         } catch (IllegalArgumentException ex) { say(ex.getMessage()); }
         catch (IOException ex) {
             LOG.error("Cannot save Elytra course changes", ex);
@@ -254,7 +275,7 @@ public final class ElytraCourse {
         next.setElytraCourseEnabled(enabled);
         try {
             FryUtilities.applyConfig(next);
-            if (!enabled) { cancelRecording(); visible = List.of(); }
+            if (!enabled) { cancelRecording(); armed = null; visible = List.of(); }
             say("Elytra course " + (enabled ? "enabled" : "disabled") + ".");
         } catch (IOException ex) { FryUtilities.reportConfigSaveFailure(ex); }
     }
@@ -266,9 +287,9 @@ public final class ElytraCourse {
             + "); " + selected.aName() + ": " + coordinates(selected.a())
             + "; " + selected.bName() + ": " + coordinates(selected.b()) + ".");
         say(direction(selected, true) + ": " + selected.flights(true).size() + " runs, "
-            + duration(pair == null ? null : pair.forward()) + "; " + direction(selected, false)
+            + duration(pair, true) + "; " + direction(selected, false)
             + ": " + selected.flights(false).size() + " runs, "
-            + duration(pair == null ? null : pair.reverse()) + ".");
+            + duration(pair, false) + ".");
         say("Use /elytracourse list, create <name>, select <name>, rename <name>, label a|b <name>, a|b [x y z], clear, or delete.");
     }
 
@@ -277,8 +298,11 @@ public final class ElytraCourse {
             : course.bName() + " to " + course.aName();
     }
 
-    private static String duration(CourseGraph.Course course) {
-        return course == null ? "no course" : seconds(course.estimatedTicks()) + "s estimated";
+    private static String duration(Pair pair, boolean fromA) {
+        if (pair == null) return "no course";
+        var measured = pair.get(fromA);
+        if (measured != null) return seconds(measured.estimatedTicks()) + "s estimated";
+        return pair.guide(fromA).isEmpty() ? "no course" : "reverse guide available, time unmeasured";
     }
     private static String seconds(double ticks) { return String.format(Locale.ROOT, "%.1f", ticks / 20); }
     private static String coordinates(CourseStore.Anchor a) {
@@ -297,7 +321,7 @@ public final class ElytraCourse {
     }
     private static String key(String name) { return name.toLowerCase(Locale.ROOT); }
     private static void reset() {
-        store = null; context = ""; cancelRecording(); visible = List.of();
+        store = null; context = ""; cancelRecording(); armed = null; visible = List.of();
         courses.clear(); tick = 0;
     }
 
@@ -309,9 +333,10 @@ public final class ElytraCourse {
         Vec3 camera = client.gameRenderer.mainCamera().position();
         for (var shown : visible) {
             var pair = courses.get(key(shown.name()));
-            var course = pair == null ? null : pair.get(shown.fromA());
-            if (course == null) continue;
-            List<CourseGraph.Point> points = course.points();
+            if (pair == null) continue;
+            List<CourseGraph.Point> points = pair.guide(shown.fromA());
+            if (points.isEmpty()) continue;
+            boolean unmeasuredReverse = pair.get(shown.fromA()) == null;
             int color = shown.fromA() ? FORWARD_COLOR : REVERSE_COLOR;
             for (int i = 1; i < points.size(); i++) {
                 var a = points.get(i - 1); var b = points.get(i);
@@ -322,7 +347,8 @@ public final class ElytraCourse {
             if (named == null) continue;
             var endpoint = shown.fromA() ? named.a() : named.b();
             if (endpoint != null && camera.distanceToSqr(new Vec3(endpoint.x(), endpoint.y(), endpoint.z())) < 32 * 32)
-                Gizmos.billboardText(named.name() + " — " + (shown.fromA() ? named.aName() : named.bName()),
+                Gizmos.billboardText(named.name() + " — " + (shown.fromA() ? named.aName() : named.bName())
+                    + (unmeasuredReverse ? " (reverse guide)" : ""),
                     new Vec3(endpoint.x(), endpoint.y() + 2, endpoint.z()), TextGizmo.Style.forColorAndCentered(color));
         }
     }

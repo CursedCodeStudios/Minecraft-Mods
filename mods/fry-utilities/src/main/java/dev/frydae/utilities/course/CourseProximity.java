@@ -9,6 +9,8 @@ import java.util.List;
 public final class CourseProximity {
     public record Match(String name, boolean fromA, double distanceSquared) {}
     private static final double RADIUS_SQUARED = 25;
+    private static final double LAUNCH_RADIUS_SQUARED = 24 * 24;
+    private static final long LAUNCH_WINDOW_TICKS = 100;
 
     private CourseProximity() {}
 
@@ -26,5 +28,11 @@ public final class CourseProximity {
 
     private static void add(List<Match> matches, String name, boolean fromA, double distanceSquared) {
         if (distanceSquared <= RADIUS_SQUARED) matches.add(new Match(name, fromA, distanceSquared));
+    }
+
+    public static boolean canLaunchFrom(CourseStore.Anchor start, CourseGraph.Point position,
+        long ticksSinceEndpoint) {
+        return start != null && ticksSinceEndpoint >= 0 && ticksSinceEndpoint <= LAUNCH_WINDOW_TICKS
+            && start.distanceSquared(position) <= LAUNCH_RADIUS_SQUARED;
     }
 }

@@ -27,4 +27,14 @@ class CourseProximityTest {
         assertTrue(CourseProximity.nearby(store.courses(), "Default",
             new CourseGraph.Point(5, 76, 0, 1)).isEmpty());
     }
+
+    @Test void takeoffCanStartJustOutsideVisibleEndpointRadius() {
+        var start = new CourseStore.Anchor(100, 70, 0);
+        var airborne = new CourseGraph.Point(100, 82, 0, 1);
+
+        assertTrue(CourseProximity.canLaunchFrom(start, airborne, 40));
+        assertFalse(CourseProximity.canLaunchFrom(start, airborne, 101));
+        assertFalse(CourseProximity.canLaunchFrom(start,
+            new CourseGraph.Point(100, 95, 0, 1), 40));
+    }
 }
