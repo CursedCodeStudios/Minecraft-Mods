@@ -1,0 +1,30 @@
+package dev.frydae.utilities.course;
+
+import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import static org.junit.jupiter.api.Assertions.*;
+
+class CourseProximityTest {
+    @TempDir Path folder;
+
+    @Test void showsEveryCourseWithinFiveBlocksAndPrefersSelectedAtSharedStart() throws Exception {
+        var store = new CourseStore(folder, "local:test");
+        store.setAnchor(true, new CourseStore.Anchor(0, 70, 0));
+        store.setAnchor(false, new CourseStore.Anchor(100, 70, 0));
+        store.create("Second");
+        store.setAnchor(true, new CourseStore.Anchor(1, 70, 0));
+        store.setAnchor(false, new CourseStore.Anchor(101, 70, 0));
+        store.select("Default");
+
+        var within = CourseProximity.nearby(store.courses(), store.selected().name(),
+            new CourseGraph.Point(5, 70, 0, 1));
+        assertEquals(2, within.size());
+        assertEquals("Default", within.getFirst().name());
+        assertEquals("Second", within.getLast().name());
+        assertEquals(1, CourseProximity.nearby(store.courses(), "Default",
+            new CourseGraph.Point(5.01, 70, 0, 1)).size());
+        assertTrue(CourseProximity.nearby(store.courses(), "Default",
+            new CourseGraph.Point(5, 76, 0, 1)).isEmpty());
+    }
+}

@@ -117,7 +117,7 @@ public final class FryUtilitiesConfigScreen extends Screen {
             draft::setElytraCourseEnabled);
         y += 34;
         var description = new MultiLineTextWidget(left, y,
-            Component.literal("In the Nether, use /elytracourse a and /elytracourse b to set endpoints. Glide between them to record trips. The quickest learned route appears as a floating line. /elytracourse shows status and options."), font)
+            Component.literal("Use /elytracourse create <name> for a named Nether course, then /elytracourse a and b at its endpoints. Learned lines appear within five blocks of an endpoint and stay visible while flying. /elytracourse shows commands."), font)
             .setMaxWidth(contentWidth).setCentered(true).setMaxRows(5);
         addRenderableOnly(description);
     }

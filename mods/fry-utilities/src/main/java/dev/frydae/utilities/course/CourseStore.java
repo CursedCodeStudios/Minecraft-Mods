@@ -2,6 +2,7 @@ package dev.frydae.utilities.course;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -10,10 +11,14 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
-/** One local Nether course per world or server. No route data is sent to the server. */
+/** Named Nether courses local to one world or server. */
 public final class CourseStore {
     public record Anchor(double x, double y, double z) {
         public double distanceSquared(CourseGraph.Point point) {
@@ -21,13 +26,39 @@ public final class CourseStore {
             return dx * dx + dy * dy + dz * dz;
         }
     }
+    public static final class Course {
+        private String name, aName = "A", bName = "B";
+        private Anchor a, b;
+        private List<CourseGraph.Flight> forward = new ArrayList<>(), reverse = new ArrayList<>();
+        private Course(String name) { this.name = name; }
+        private Course copy() {
+            Course next = new Course(name);
+            next.aName = aName; next.bName = bName; next.a = a; next.b = b;
+            next.forward = new ArrayList<>(forward); next.reverse = new ArrayList<>(reverse);
+            return next;
+        }
+        public String name() { return name; }
+        public String aName() { return aName; }
+        public String bName() { return bName; }
+        public Anchor a() { return a; }
+        public Anchor b() { return b; }
+        public List<CourseGraph.Flight> flights(boolean fromA) {
+            return List.copyOf(fromA ? forward : reverse);
+        }
+    }
     private static final class Data {
-        int schema = 1;
+        int schema = 2;
+        String selected = keyName("Default");
+        Map<String, Course> courses = new LinkedHashMap<>();
+        Data() { courses.put(selected, new Course("Default")); }
+    }
+    private static final class LegacyData {
+        int schema;
         Anchor a, b;
-        List<CourseGraph.Flight> forward = new ArrayList<>(), reverse = new ArrayList<>();
+        List<CourseGraph.Flight> forward, reverse;
     }
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final int MAX_FLIGHTS = 8, MAX_POINTS = 4_000;
+    private static final int MAX_COURSES = 32, MAX_FLIGHTS = 8, MAX_POINTS = 4_000;
     private final Path file;
     private Data data = new Data();
 
@@ -35,53 +66,93 @@ public final class CourseStore {
         file = folder.resolve("elytra-course-" + key(world) + ".json");
         if (!Files.exists(file)) return;
         try {
-            data = JSON.fromJson(Files.readString(file), Data.class);
-            if (data == null || data.schema != 1 || data.forward == null || data.reverse == null
-                || data.forward.size() > MAX_FLIGHTS || data.reverse.size() > MAX_FLIGHTS
-                || !valid(data.a) || !valid(data.b)) throw new IllegalArgumentException("Invalid course");
-            validate(data.forward); validate(data.reverse);
+            String json = Files.readString(file);
+            int schema = JsonParser.parseString(json).getAsJsonObject().get("schema").getAsInt();
+            if (schema == 1) data = migrate(JSON.fromJson(json, LegacyData.class));
+            else if (schema == 2) data = JSON.fromJson(json, Data.class);
+            else throw new IllegalArgumentException("Unsupported course schema");
+            validate(data);
         } catch (RuntimeException ex) {
             throw new IOException("Cannot read " + file + "; original retained", ex);
         }
     }
 
-    public Anchor a() { return data.a; }
-    public Anchor b() { return data.b; }
-    public List<CourseGraph.Flight> flights(boolean forward) {
-        return List.copyOf(forward ? data.forward : data.reverse);
+    public Collection<Course> courses() { return List.copyOf(data.courses.values()); }
+    public List<String> names() { return data.courses.values().stream().map(Course::name).toList(); }
+    public Course selected() { return data.courses.get(data.selected); }
+    public Course get(String name) { return data.courses.get(keyName(name)); }
+
+    public boolean create(String name) throws IOException {
+        requireName(name);
+        String key = keyName(name);
+        if (data.courses.containsKey(key) || data.courses.size() >= MAX_COURSES) return false;
+        Data next = copy(); next.courses.put(key, new Course(name)); next.selected = key;
+        save(next); data = next; return true;
+    }
+
+    public boolean select(String name) throws IOException {
+        String key = keyName(name);
+        if (!data.courses.containsKey(key)) return false;
+        Data next = copy(); next.selected = key;
+        save(next); data = next; return true;
+    }
+
+    public boolean rename(String oldName, String newName) throws IOException {
+        requireName(newName);
+        String oldKey = keyName(oldName), newKey = keyName(newName);
+        if (!data.courses.containsKey(oldKey) || (!oldKey.equals(newKey) && data.courses.containsKey(newKey))) return false;
+        Data next = copy(); Course course = next.courses.remove(oldKey); course.name = newName;
+        next.courses.put(newKey, course);
+        if (next.selected.equals(oldKey)) next.selected = newKey;
+        save(next); data = next; return true;
+    }
+
+    public boolean delete(String name) throws IOException {
+        String key = keyName(name);
+        if (!data.courses.containsKey(key) || data.courses.size() == 1) return false;
+        Data next = copy(); next.courses.remove(key);
+        if (next.selected.equals(key)) next.selected = next.courses.keySet().iterator().next();
+        save(next); data = next; return true;
+    }
+
+    public boolean renameEndpoint(boolean first, String name) throws IOException {
+        requireName(name);
+        Course active = selected();
+        if (keyName(name).equals(keyName(first ? active.bName : active.aName))) return false;
+        Data next = copy(); Course course = next.courses.get(next.selected);
+        if (first) course.aName = name; else course.bName = name;
+        save(next); data = next; return true;
     }
 
     public void setAnchor(boolean first, Anchor anchor) throws IOException {
         if (anchor == null || !valid(anchor)) throw new IllegalArgumentException("Invalid endpoint");
-        Data next = copy();
-        if (first) next.a = anchor; else next.b = anchor;
-        next.forward.clear(); next.reverse.clear();
+        Data next = copy(); Course course = next.courses.get(next.selected);
+        if (first) course.a = anchor; else course.b = anchor;
+        course.forward.clear(); course.reverse.clear();
         save(next); data = next;
     }
 
-    public void addFlight(boolean forward, CourseGraph.Flight flight) throws IOException {
+    public void addFlight(String courseName, boolean forward, CourseGraph.Flight flight) throws IOException {
         validate(List.of(flight));
-        Data next = copy();
-        List<CourseGraph.Flight> list = forward ? next.forward : next.reverse;
+        Data next = copy(); Course course = next.courses.get(keyName(courseName));
+        if (course == null) throw new IllegalArgumentException("Unknown course");
+        List<CourseGraph.Flight> list = forward ? course.forward : course.reverse;
         list.add(flight);
         if (list.size() > MAX_FLIGHTS) list.removeFirst();
         save(next); data = next;
     }
 
     public void clearFlights() throws IOException {
-        Data next = copy();
-        next.forward.clear(); next.reverse.clear();
+        Data next = copy(); Course course = next.courses.get(next.selected);
+        course.forward.clear(); course.reverse.clear();
         save(next); data = next;
     }
 
     private Data copy() {
-        Data next = new Data();
-        next.a = data.a; next.b = data.b;
-        next.forward = new ArrayList<>(data.forward);
-        next.reverse = new ArrayList<>(data.reverse);
+        Data next = new Data(); next.selected = data.selected; next.courses.clear();
+        data.courses.forEach((key, course) -> next.courses.put(key, course.copy()));
         return next;
     }
-
     private void save(Data next) throws IOException {
         Files.createDirectories(file.getParent());
         Path temporary = file.resolveSibling(file.getFileName() + ".tmp");
@@ -92,6 +163,28 @@ public final class CourseStore {
         }
     }
 
+    private static Data migrate(LegacyData old) {
+        if (old == null || old.forward == null || old.reverse == null) throw new IllegalArgumentException("Invalid legacy course");
+        Data next = new Data(); Course course = next.courses.get(next.selected);
+        course.a = old.a; course.b = old.b;
+        course.forward = old.forward; course.reverse = old.reverse;
+        return next;
+    }
+    private static void validate(Data value) {
+        if (value == null || value.schema != 2 || value.courses == null || value.courses.isEmpty()
+            || value.courses.size() > MAX_COURSES || !value.courses.containsKey(value.selected))
+            throw new IllegalArgumentException("Invalid course collection");
+        for (var entry : value.courses.entrySet()) {
+            Course course = entry.getValue();
+            if (course == null || !validName(course.name) || !entry.getKey().equals(keyName(course.name))
+                || !validName(course.aName) || !validName(course.bName)
+                || keyName(course.aName).equals(keyName(course.bName))
+                || !valid(course.a) || !valid(course.b) || course.forward == null || course.reverse == null
+                || course.forward.size() > MAX_FLIGHTS || course.reverse.size() > MAX_FLIGHTS)
+                throw new IllegalArgumentException("Invalid named course");
+            validate(course.forward); validate(course.reverse);
+        }
+    }
     private static void validate(List<CourseGraph.Flight> flights) {
         for (var flight : flights) {
             if (flight == null || flight.points() == null || flight.points().size() < 2
@@ -104,7 +197,14 @@ public final class CourseStore {
             }
         }
     }
-
+    private static void requireName(String name) {
+        if (!validName(name)) throw new IllegalArgumentException("Names must be 1-32 letters, numbers, spaces, _ or -.");
+    }
+    private static boolean validName(String name) {
+        return name != null && name.equals(name.trim()) && name.length() >= 1 && name.length() <= 32
+            && name.matches("[A-Za-z0-9][A-Za-z0-9 _-]*");
+    }
+    private static String keyName(String name) { return name.trim().toLowerCase(Locale.ROOT); }
     private static boolean valid(Anchor anchor) {
         return anchor == null || valid(anchor.x(), anchor.y(), anchor.z());
     }
