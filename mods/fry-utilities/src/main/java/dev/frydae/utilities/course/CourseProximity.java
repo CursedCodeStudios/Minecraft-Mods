@@ -10,6 +10,7 @@ public final class CourseProximity {
     public record Match(String name, boolean fromA, double distanceSquared) {}
     private static final double RADIUS_SQUARED = 25;
     private static final double LAUNCH_RADIUS_SQUARED = 24 * 24;
+    private static final double FINISH_RADIUS_SQUARED = 14 * 14;
     private static final long LAUNCH_WINDOW_TICKS = 100;
 
     private CourseProximity() {}
@@ -34,5 +35,9 @@ public final class CourseProximity {
         long ticksSinceEndpoint) {
         return start != null && ticksSinceEndpoint >= 0 && ticksSinceEndpoint <= LAUNCH_WINDOW_TICKS
             && start.distanceSquared(position) <= LAUNCH_RADIUS_SQUARED;
+    }
+
+    public static boolean canFinishAt(CourseStore.Anchor target, CourseGraph.Point position) {
+        return target != null && target.distanceSquared(position) <= FINISH_RADIUS_SQUARED;
     }
 }

@@ -26,7 +26,6 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 /** Client-only recorder and guide for named Nether routes. */
 public final class ElytraCourse {
     private static final Logger LOG = LoggerFactory.getLogger("dev.frydae.utilities.course");
-    private static final double ENDPOINT_RADIUS_SQUARED = 5 * 5;
     private static final double MAX_TICK_JUMP_SQUARED = 12 * 12;
     private static final int MAX_FLIGHT_TICKS = 20 * 60 * 20;
     private static final int MAX_POINTS = 4_000;
@@ -121,6 +120,8 @@ public final class ElytraCourse {
             cancelRecording(); armed = null; visible = List.of(); return;
         }
         if (!client.player.isFallFlying()) {
+            if (recording != null && !finishIfReached(sample, near))
+                say("Flight not saved: finish within 14 blocks of the opposite endpoint. Move its coordinates if needed.");
             cancelRecording(); visible = near;
             var match = completeMatch(near);
             if (match != null) { armed = match; armedAt = tick; }
@@ -149,10 +150,17 @@ public final class ElytraCourse {
         }
         var active = store.get(recordingMatch.name());
         if (active == null) { cancelRecording(); visible = List.of(); return; }
+        finishIfReached(sample, near);
+    }
+
+    private static boolean finishIfReached(CourseGraph.Point sample, List<CourseProximity.Match> near) {
+        if (recording == null || recording.size() < 2 || tick - recording.getFirst().tick() < 20)
+            return false;
+        var active = store.get(recordingMatch.name());
+        if (active == null) return false;
         CourseStore.Anchor target = recordingMatch.fromA() ? active.b() : active.a();
-        if (target.distanceSquared(sample) > ENDPOINT_RADIUS_SQUARED || recording.size() < 2
-            || tick - recording.getFirst().tick() < 20) return;
-        if (recording.getLast().tick() != tick) recording.add(sample);
+        if (!CourseProximity.canFinishAt(target, sample)) return false;
+        if (recording.getLast().tick() != tick && recording.size() < MAX_POINTS) recording.add(sample);
         try {
             store.addFlight(active.name(), recordingMatch.fromA(), new CourseGraph.Flight(recording));
             recalculate(active.name());
@@ -166,6 +174,7 @@ public final class ElytraCourse {
             say("Cannot save flight. See latest.log.");
         }
         cancelRecording(); visible = near;
+        return true;
     }
 
     private static void start(CourseProximity.Match match, CourseGraph.Point sample, Vec3 position) {
@@ -290,6 +299,10 @@ public final class ElytraCourse {
             + duration(pair, true) + "; " + direction(selected, false)
             + ": " + selected.flights(false).size() + " runs, "
             + duration(pair, false) + ".");
+        if (pair == null || (pair.guide(true).isEmpty() && pair.guide(false).isEmpty()))
+            say("No learned line yet. A completed trip will announce 'flight saved'; reach the opposite endpoint while gliding or landing nearby.");
+        else if (visible.stream().noneMatch(match -> match.name().equalsIgnoreCase(selected.name())))
+            say("A course is saved. Stand within five blocks of either endpoint to show its line.");
         say("Use /elytracourse list, create <name>, select <name>, rename <name>, label a|b <name>, a|b [x y z], clear, or delete.");
     }
 
@@ -335,21 +348,25 @@ public final class ElytraCourse {
             var pair = courses.get(key(shown.name()));
             if (pair == null) continue;
             List<CourseGraph.Point> points = pair.guide(shown.fromA());
-            if (points.isEmpty()) continue;
             boolean unmeasuredReverse = pair.get(shown.fromA()) == null;
             int color = shown.fromA() ? FORWARD_COLOR : REVERSE_COLOR;
             for (int i = 1; i < points.size(); i++) {
                 var a = points.get(i - 1); var b = points.get(i);
                 if (distanceSquared(camera, a) > 192 * 192 && distanceSquared(camera, b) > 192 * 192) continue;
-                Gizmos.line(new Vec3(a.x(), a.y(), a.z()), new Vec3(b.x(), b.y(), b.z()), color, 2.5f);
+                Gizmos.line(new Vec3(a.x(), a.y(), a.z()), new Vec3(b.x(), b.y(), b.z()), color, 4.0f)
+                    .setAlwaysOnTop();
             }
             var named = store.get(shown.name());
             if (named == null) continue;
             var endpoint = shown.fromA() ? named.a() : named.b();
-            if (endpoint != null && camera.distanceToSqr(new Vec3(endpoint.x(), endpoint.y(), endpoint.z())) < 32 * 32)
+            if (endpoint != null && camera.distanceToSqr(new Vec3(endpoint.x(), endpoint.y(), endpoint.z())) < 32 * 32) {
+                Gizmos.point(new Vec3(endpoint.x(), endpoint.y() + 1, endpoint.z()), color, 10.0f)
+                    .setAlwaysOnTop();
                 Gizmos.billboardText(named.name() + " — " + (shown.fromA() ? named.aName() : named.bName())
-                    + (unmeasuredReverse ? " (reverse guide)" : ""),
-                    new Vec3(endpoint.x(), endpoint.y() + 2, endpoint.z()), TextGizmo.Style.forColorAndCentered(color));
+                    + (points.isEmpty() ? " (no flight yet)" : unmeasuredReverse ? " (reverse guide)" : ""),
+                    new Vec3(endpoint.x(), endpoint.y() + 2, endpoint.z()), TextGizmo.Style.forColorAndCentered(color))
+                    .setAlwaysOnTop();
+            }
         }
     }
     private static double distanceSquared(Vec3 camera, CourseGraph.Point point) {

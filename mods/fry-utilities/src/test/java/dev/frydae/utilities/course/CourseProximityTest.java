@@ -37,4 +37,16 @@ class CourseProximityTest {
         assertFalse(CourseProximity.canLaunchFrom(start,
             new CourseGraph.Point(100, 95, 0, 1), 40));
     }
+
+    @Test void landingCanCompleteOutsideFiveBlockDisplayRadius() throws Exception {
+        var store = new CourseStore(folder, "local:landing");
+        store.setAnchor(true, new CourseStore.Anchor(0, 70, 0));
+        store.setAnchor(false, new CourseStore.Anchor(100, 70, 0));
+        var landing = new CourseGraph.Point(89, 70, 0, 100);
+
+        assertTrue(CourseProximity.nearby(store.courses(), "Default", landing).isEmpty());
+        assertTrue(CourseProximity.canFinishAt(store.selected().b(), landing));
+        assertFalse(CourseProximity.canFinishAt(store.selected().b(),
+            new CourseGraph.Point(85, 70, 0, 100)));
+    }
 }
