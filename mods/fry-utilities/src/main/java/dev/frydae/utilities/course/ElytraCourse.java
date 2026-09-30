@@ -42,7 +42,7 @@ public final class ElytraCourse {
     private static List<CourseProximity.Match> visible = List.of();
     private record Pair(CourseGraph.Course forward, CourseGraph.Course reverse) {
         CourseGraph.Course get(boolean fromA) { return fromA ? forward : reverse; }
-        List<CourseGraph.Point> guide(boolean fromA) { return CourseGuide.points(forward, reverse, fromA); }
+        CourseGuide.Selection guide(boolean fromA) { return CourseGuide.select(forward, reverse, fromA); }
     }
     private static final Map<String, Pair> courses = new HashMap<>();
     private static Vec3 lastPosition;
@@ -300,7 +300,7 @@ public final class ElytraCourse {
             + duration(pair, true) + "; " + direction(selected, false)
             + ": " + selected.flights(false).size() + " runs, "
             + duration(pair, false) + ".");
-        if (pair == null || (pair.guide(true).isEmpty() && pair.guide(false).isEmpty()))
+        if (pair == null || (pair.guide(true).points().isEmpty() && pair.guide(false).points().isEmpty()))
             say("No learned line yet. A completed trip will announce 'flight saved'; reach the opposite endpoint while gliding or landing nearby.");
         else if (visible.stream().noneMatch(match -> match.name().equalsIgnoreCase(selected.name())))
             say("A course is saved. Stand within five blocks of either endpoint to show its line.");
@@ -315,8 +315,9 @@ public final class ElytraCourse {
     private static String duration(Pair pair, boolean fromA) {
         if (pair == null) return "no course";
         var measured = pair.get(fromA);
-        if (measured != null) return seconds(measured.estimatedTicks()) + "s estimated";
-        return pair.guide(fromA).isEmpty() ? "no course" : "reverse guide available, time unmeasured";
+        if (measured != null) return seconds(measured.estimatedTicks()) + "s estimated"
+            + (pair.guide(fromA).fromOpposite() ? ", showing faster opposite track in reverse" : "");
+        return pair.guide(fromA).points().isEmpty() ? "no course" : "reverse guide available, time unmeasured";
     }
     private static String seconds(double ticks) { return String.format(Locale.ROOT, "%.1f", ticks / 20); }
     private static String coordinates(CourseStore.Anchor a) {
@@ -350,9 +351,12 @@ public final class ElytraCourse {
         for (var shown : visible) {
             var pair = courses.get(key(shown.name()));
             if (pair == null) continue;
-            List<CourseGraph.Point> points = pair.guide(shown.fromA());
-            boolean unmeasuredReverse = pair.get(shown.fromA()) == null;
+            var guide = pair.guide(shown.fromA());
+            List<CourseGraph.Point> points = guide.points();
             int color = shown.fromA() ? FORWARD_COLOR : REVERSE_COLOR;
+            String guideLabel = points.isEmpty() ? " (no flight yet)"
+                : guide.fromOpposite() ? (pair.get(shown.fromA()) == null
+                    ? " (reverse guide)" : " (faster reverse guide)") : "";
             var window = CourseWindow.ahead(points, player, GUIDE_LOOKAHEAD_BLOCKS);
             for (int i = 1; i < window.size(); i++) {
                 var a = window.get(i - 1); var b = window.get(i);
@@ -366,7 +370,7 @@ public final class ElytraCourse {
                 Gizmos.point(new Vec3(endpoint.x(), endpoint.y() + 1, endpoint.z()), color, 10.0f)
                     .setAlwaysOnTop();
                 Gizmos.billboardText(named.name() + " — " + (shown.fromA() ? named.aName() : named.bName())
-                    + (points.isEmpty() ? " (no flight yet)" : unmeasuredReverse ? " (reverse guide)" : ""),
+                    + guideLabel,
                     new Vec3(endpoint.x(), endpoint.y() + 2, endpoint.z()), TextGizmo.Style.forColorAndCentered(color))
                     .setAlwaysOnTop();
             }
