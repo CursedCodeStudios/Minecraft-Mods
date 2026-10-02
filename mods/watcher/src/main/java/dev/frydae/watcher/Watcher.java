@@ -182,6 +182,6 @@ public final class Watcher implements ClientModInitializer {
 
     private static void say(String text) {
         var player = Minecraft.getInstance().player;
-        if (player != null) player.sendSystemMessage(Component.literal("[Watcher] " + text));
+        if (player != null) player.sendSystemMessage(Component.literal("[Alt Affairs] " + text));
     }
 }

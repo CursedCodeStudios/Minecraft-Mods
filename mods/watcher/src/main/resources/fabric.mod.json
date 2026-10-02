@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "watcher",
   "version": "${version}",
-  "name": "Watcher",
+  "name": "Alt Affairs",
   "description": "Automatically sleeps nearby alt accounts when beds become usable, with shared chat pause controls.",
   "environment": "client",
   "entrypoints": { "client": ["dev.frydae.watcher.Watcher"] },

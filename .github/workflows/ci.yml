@@ -80,7 +80,7 @@ jobs:
           $watcherJar = Join-Path build/suite (($manifest.mods | Where-Object id -eq 'watcher').jar)
           $watcherEntries = @(& jar tf $watcherJar)
           if ($LASTEXITCODE -ne 0 -or $watcherEntries -notcontains 'dev/frydae/watcher/Watcher.class') {
-            throw 'Watcher is missing its standalone entrypoint'
+            throw 'Alt Affairs is missing its standalone entrypoint'
           }
           $seedJar = Join-Path build/suite (($manifest.mods | Where-Object id -eq 'seedscout').jar)
           $entries = @(& jar tf $seedJar)
