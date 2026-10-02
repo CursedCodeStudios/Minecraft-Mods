@@ -27,6 +27,8 @@ public final class WatcherState {
     public boolean enabled(String context) { return Boolean.parseBoolean(values.getProperty(key(context) + ".enabled", "true")); }
     public void setPaused(String context, boolean paused) throws IOException { save(key(context) + ".paused", paused); }
     public void setEnabled(String context, boolean enabled) throws IOException { save(key(context) + ".enabled", enabled); }
+    public boolean autoReconnect() { return Boolean.parseBoolean(values.getProperty("autoReconnect", "true")); }
+    public void setAutoReconnect(boolean enabled) throws IOException { save("autoReconnect", enabled); }
 
     private void save(String key, boolean value) throws IOException {
         values.setProperty(key, Boolean.toString(value));

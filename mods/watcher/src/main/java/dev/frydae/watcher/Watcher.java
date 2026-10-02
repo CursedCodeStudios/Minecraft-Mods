@@ -10,6 +10,13 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ConnectScreen;
+import net.minecraft.client.gui.screens.DisconnectedScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.client.multiplayer.ServerList;
+import net.minecraft.client.multiplayer.resolver.ServerAddress;
+import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
@@ -37,6 +44,7 @@ public final class Watcher implements ClientModInitializer {
     private long nextScan;
     private long nextWake;
     private final Map<BlockPos, Long> retries = new HashMap<>();
+    private final ReconnectDelay reconnectDelay = new ReconnectDelay();
 
     @Override public void onInitializeClient() {
         try { state = new WatcherState(FabricLoader.getInstance().getConfigDir().resolve("watcher/state.properties")); }
@@ -54,7 +62,10 @@ public final class Watcher implements ClientModInitializer {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> dispatcher.register(
             literal("watcher").executes(c -> { status(); return 1; })
                 .then(literal("on").executes(c -> { setEnabled(true); return 1; }))
-                .then(literal("off").executes(c -> { setEnabled(false); return 1; }))));
+                .then(literal("off").executes(c -> { setEnabled(false); return 1; }))
+                .then(literal("reconnect")
+                    .then(literal("on").executes(c -> { setReconnect(true); return 1; }))
+                    .then(literal("off").executes(c -> { setReconnect(false); return 1; })))));
     }
 
     private void refreshContext(Minecraft client) {
@@ -91,6 +102,7 @@ public final class Watcher implements ClientModInitializer {
     }
 
     private void tick(Minecraft client) {
+        reconnect(client);
         refreshContext(client);
         tick++;
         if (client.player == null || client.level == null || client.gameMode == null) return;
@@ -113,6 +125,33 @@ public final class Watcher implements ClientModInitializer {
         retries.put(head.immutable(), tick + 100);
         retries.put(head.relative(block.getValue(BedBlock.FACING).getOpposite()), tick + 100);
         client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, hit);
+    }
+
+    private void reconnect(Minecraft client) {
+        boolean idle = state != null && state.autoReconnect() && client.level == null
+            && client.getConnection() == null && !client.hasSingleplayerServer()
+            && client.gui.overlay() == null && client.allowsMultiplayer()
+            && (client.gui.screen() instanceof TitleScreen || client.gui.screen() instanceof DisconnectedScreen
+                || client.gui.screen() instanceof JoinMultiplayerScreen);
+        if (!reconnectDelay.ready(Util.getMillis(), idle)) return;
+        try {
+            var servers = new ServerList(client);
+            servers.load();
+            if (servers.size() == 0) return;
+            var first = servers.get(0);
+            if (!ServerAddress.isValidAddress(first.ip)) return;
+            ConnectScreen.startConnecting(new JoinMultiplayerScreen(new TitleScreen()), client,
+                ServerAddress.parseString(first.ip), first, false, null);
+        } catch (RuntimeException ex) {
+            LOG.error("Automatic connection failed; will retry", ex);
+        }
+    }
+
+    private void setReconnect(boolean value) {
+        if (state == null) { say("Settings could not load. See latest.log."); return; }
+        try { state.setAutoReconnect(value); }
+        catch (IOException ex) { reportSaveFailure(ex); }
+        status();
     }
 
     private BlockHitResult nearestBed(Minecraft client) {
@@ -172,7 +211,8 @@ public final class Watcher implements ClientModInitializer {
     private void status() {
         refreshContext(Minecraft.getInstance());
         say("Automatic sleeping " + (enabled ? "on" : "off") + "; chat pause " + (paused ? "active" : "inactive")
-            + ". Park beside an available bed. Use /watcher on or off.");
+            + "; automatic reconnect " + (state != null && state.autoReconnect() ? "on" : "off")
+            + ". Use /watcher on|off or /watcher reconnect on|off.");
     }
 
     private void reportSaveFailure(IOException ex) {

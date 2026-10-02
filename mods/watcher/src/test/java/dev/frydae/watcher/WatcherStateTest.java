@@ -8,6 +8,16 @@ import static org.junit.jupiter.api.Assertions.*;
 class WatcherStateTest {
     @TempDir Path directory;
 
+    @Test void reconnectIsEnabledByDefaultAndDisableSurvivesRestart() throws Exception {
+        Path file = directory.resolve("watcher/state.properties");
+        var state = new WatcherState(file);
+        assertTrue(state.autoReconnect());
+        state.setAutoReconnect(false);
+        assertFalse(new WatcherState(file).autoReconnect());
+        state.setAutoReconnect(true);
+        assertTrue(new WatcherState(file).autoReconnect());
+    }
+
     @Test void remembersPauseAcrossReconnectsWithoutLeakingToOtherServers() throws Exception {
         Path file = directory.resolve("watcher/state.properties");
         var state = new WatcherState(file);

@@ -3,7 +3,7 @@
   "id": "watcher",
   "version": "${version}",
   "name": "Alt Affairs",
-  "description": "Automatically sleeps nearby alt accounts when beds become usable, with shared chat pause controls.",
+  "description": "Alt-account tools for automatic sleeping, chat pause controls, and reconnecting to the first saved server.",
   "environment": "client",
   "entrypoints": { "client": ["dev.frydae.watcher.Watcher"] },
   "license": "MIT",
