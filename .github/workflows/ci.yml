@@ -66,7 +66,7 @@ jobs:
       - name: Verify packaged suite modules
         run: |
           $manifest = Get-Content build/suite/suite-manifest.json -Raw | ConvertFrom-Json
-          $expected = @('bedrockscout', 'fryutilities', 'seedscout') | Sort-Object
+          $expected = @('bedrockscout', 'fryutilities', 'seedscout', 'watcher') | Sort-Object
           $actual = @($manifest.mods.id) | Sort-Object
           if (Compare-Object $expected $actual) {
             throw "Suite manifest IDs differ. Expected: $($expected -join ', '); actual: $($actual -join ', ')"
@@ -76,6 +76,11 @@ jobs:
             if (-not (Test-Path -LiteralPath $jar -PathType Leaf)) {
               throw "Missing packaged mod: $jar"
             }
+          }
+          $watcherJar = Join-Path build/suite (($manifest.mods | Where-Object id -eq 'watcher').jar)
+          $watcherEntries = @(& jar tf $watcherJar)
+          if ($LASTEXITCODE -ne 0 -or $watcherEntries -notcontains 'dev/frydae/watcher/Watcher.class') {
+            throw 'Watcher is missing its standalone entrypoint'
           }
           $seedJar = Join-Path build/suite (($manifest.mods | Where-Object id -eq 'seedscout').jar)
           $entries = @(& jar tf $seedJar)

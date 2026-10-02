@@ -1,6 +1,6 @@
 # Minecraft Mod Suite
 
-A multi-project Fabric workspace for Minecraft 26.2. Each produced mod is independently installable; the suite shares build conventions and releases all modules at one version. Fry Utilities contains villager trading, container JSON exports, a learned Nether Elytra course, drowned highlights, No Strip protection, Slime Scout, Monument Scout, and End City Scout. Bedrock Scout and Seed Scout remain separate mods. The merged scouts retain their commands and saved-data locations.
+A multi-project Fabric workspace for Minecraft 26.2. Each produced mod is independently installable; the suite shares build conventions and releases all modules at one version. Fry Utilities contains villager trading, container JSON exports, a learned Nether Elytra course, drowned highlights, No Strip protection, Slime Scout, Monument Scout, and End City Scout. Bedrock Scout, Seed Scout, and Watcher are separate mods. Version 1.9.0 introduces Watcher for automatic alt-account sleeping with chat pause controls. The merged scouts retain their commands and saved-data locations.
 
 ## Layout
 
@@ -11,6 +11,7 @@ build.gradle                  Aggregate checks and release packaging
 gradle/fabric-mod.gradle       Shared Fabric/Java/test/metadata conventions
 mods/bedrock-scout/            Exposed 3x3 Nether-roof bedrock formations
 mods/seed-scout/               Local Nether-bedrock world-seed recovery
+mods/watcher/                  Automatic alt-account sleeping and chat pause controls
 mods/fry-utilities/             Trading, highlights, and merged structure/entity scouts
 templates/fabric-mod/          Starting point for the next mod
 ```
@@ -35,7 +36,7 @@ Release outputs:
 - `build/distributions/minecraft-mod-suite-<version>.zip`: all mods with installation instructions and license.
 - `mods/<module>/build/libs/`: individual mod JAR and sources JAR.
 
-Only copy regular mod JARs into Minecraft's `mods` directory; do not install source JARs or the ZIP. See [installation](INSTALL.md), [Fry Utilities documentation](mods/fry-utilities/README.md), its [Slime Scout](mods/fry-utilities/docs/slime-scout.md), [Monument Scout](mods/fry-utilities/docs/monument-scout.md), and [End City Scout](mods/fry-utilities/docs/end-city-scout.md) guides, plus the separate [Bedrock Scout](mods/bedrock-scout/README.md) and [Seed Scout](mods/seed-scout/README.md) guides.
+Only copy regular mod JARs into Minecraft's `mods` directory; do not install source JARs or the ZIP. See [installation](INSTALL.md), [Fry Utilities documentation](mods/fry-utilities/README.md), its [Slime Scout](mods/fry-utilities/docs/slime-scout.md), [Monument Scout](mods/fry-utilities/docs/monument-scout.md), and [End City Scout](mods/fry-utilities/docs/end-city-scout.md) guides, plus the separate [Bedrock Scout](mods/bedrock-scout/README.md), [Seed Scout](mods/seed-scout/README.md), and [Watcher](mods/watcher/README.md) guides.
 
 The three scouts inside Fry Utilities and the separate Bedrock Scout use the shared **Minecraft Scouts** Xaero waypoint set. Each scout manages its own markers, so its marker toggle does not hide another scout's markers.
 

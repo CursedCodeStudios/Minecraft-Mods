@@ -14,3 +14,5 @@ include 'seed-scout'
 project(':seed-scout').projectDir = file('mods/seed-scout')
 include 'fry-utilities'
 project(':fry-utilities').projectDir = file('mods/fry-utilities')
+include 'watcher'
+project(':watcher').projectDir = file('mods/watcher')
