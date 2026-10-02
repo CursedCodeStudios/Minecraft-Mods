@@ -1,6 +1,6 @@
 # Alt Affairs
 
-Alt Affairs is a standalone client-only Fabric mod for Minecraft 26.2 for managing alt accounts. Version 1.10.0 adds automatic connection to the first saved server. Introduced as Watcher in suite version 1.9.0, it was renamed in 1.9.1. It also provides automatic sleeping with chat pause controls. It requires Fabric Loader and Fabric API and works independently of Fry Utilities. Install `alt-affairs-<version>.jar` in each alt's instance and replace the older `watcher` JAR.
+Alt Affairs is a standalone client-only Fabric mod for Minecraft 26.2 for managing alt accounts. Version 1.10.1 immediately attempts to sleep when chat permission is restored at night. Version 1.10.0 added automatic connection to the first saved server. Introduced as Watcher in suite version 1.9.0, it was renamed in 1.9.1. It also provides automatic sleeping with chat pause controls. It requires Fabric Loader and Fabric API and works independently of Fry Utilities. Install `alt-affairs-<version>.jar` in each alt's instance and replace the older `watcher` JAR.
 
 Automatic reconnection is enabled by default. Put the intended server first in Minecraft's saved multiplayer list. From the title screen, multiplayer list, or disconnect screen, an offline alt waits ten seconds and attempts to join that first server. Failed connections are retried after another ten-second wait. Leaving a server manually also triggers reconnection. An empty server list is left alone, and active connections, singleplayer sessions, loading screens, and other menus are not interrupted. Each retry reloads the saved list, so reordering its first entry changes the target.
 
@@ -11,7 +11,7 @@ Park the alt beside an available Overworld bed. Alt Affairs uses the nearest uno
 Send either of these messages in normal server chat from any account:
 
 - `Please don't sleep` pauses sleeping and wakes a watcher that is already in bed. It responds with `Okay bestie! We won't sleep! Say "pickles yummy yummy" when we can sleep again`.
-- `pickles yummy yummy` clears the pause. It responds with `Ugh finally! I'm so tired!` and can immediately use a bed if sleeping is currently allowed.
+- `pickles yummy yummy` clears the pause and responds with `Ugh finally! I'm so tired!`. With automatic sleeping enabled, it immediately tries a reachable bed if sleeping is currently allowed, clearing any previous bed retry cooldown. During daytime it waits until sleeping becomes allowed.
 
 Commands match the whole chat message, ignoring capitalization and outer spaces. Curly apostrophes are accepted. Signed player chat and common server-formatted chat such as `<Player> message` or `Player: message` are supported. Alt Affairs replies cannot trigger other watchers. Each instance acknowledges each recognized request, so several installed alts can each respond.
 

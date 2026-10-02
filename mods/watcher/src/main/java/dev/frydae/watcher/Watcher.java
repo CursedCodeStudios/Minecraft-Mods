@@ -99,15 +99,24 @@ public final class Watcher implements ClientModInitializer {
         if (paused) wake(client);
         if (client.getConnection() != null)
             client.getConnection().sendChat(paused ? SleepChat.PAUSE_REPLY : SleepChat.RESUME_REPLY);
+        if (!paused) {
+            // Permission is a fresh attempt, even if this bed was tried before the pause.
+            retries.clear();
+            trySleep(client);
+        }
     }
 
     private void tick(Minecraft client) {
         reconnect(client);
         refreshContext(client);
         tick++;
-        if (client.player == null || client.level == null || client.gameMode == null) return;
         if (paused) { wake(client); return; }
-        if (!enabled) return;
+        trySleep(client);
+    }
+
+    private void trySleep(Minecraft client) {
+        if (client.player == null || client.level == null || client.gameMode == null) return;
+        if (paused || !enabled) return;
         if (!client.level.dimension().equals(Level.OVERWORLD) || !client.player.isAlive()
             || client.player.isSleeping() || client.player.isSpectator() || client.player.isPassenger()
             || client.player.isShiftKeyDown()) return;
