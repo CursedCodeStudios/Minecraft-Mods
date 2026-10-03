@@ -16,6 +16,8 @@ mods/fry-utilities/             Trading, highlights, and merged structure/entity
 templates/fabric-mod/          Starting point for the next mod
 ```
 
+Version 1.11.0 adds `/elytracourse export` and `/elytracourse import` to Fry Utilities. Main and alt instances on the same machine share a course-export folder, and transfers retain endpoint labels and recorded flights in both directions.
+
 ## Build and develop
 
 Set `JAVA_HOME` to a JDK matching `java_version` (currently 25), then run commands from the repository root. Use `./gradlew` instead of `gradlew.bat` on macOS/Linux.

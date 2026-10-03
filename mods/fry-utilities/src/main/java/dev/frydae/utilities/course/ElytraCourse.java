@@ -16,6 +16,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.gizmos.Gizmos;
 import net.minecraft.gizmos.TextGizmo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
@@ -69,6 +71,15 @@ public final class ElytraCourse {
                 .then(literal("list").executes(c -> { list(); return 1; }))
                 .then(literal("delete").executes(c -> { delete(); return 1; }))
                 .then(literal("clear").executes(c -> { clearFlights(); return 1; }))
+                .then(literal("export").executes(c -> { exportCourse(null); return 1; })
+                    .then(argument("name", StringArgumentType.string())
+                        .executes(c -> { exportCourse(StringArgumentType.getString(c, "name")); return 1; })))
+                .then(literal("import").then(argument("file", StringArgumentType.string())
+                    .suggests((c, builder) -> SharedSuggestionProvider.suggest(transfers().filenames(), builder))
+                    .executes(c -> { importCourse(StringArgumentType.getString(c, "file"), null); return 1; })
+                    .then(argument("name", StringArgumentType.string())
+                        .executes(c -> { importCourse(StringArgumentType.getString(c, "file"),
+                            StringArgumentType.getString(c, "name")); return 1; }))))
                 .then(literal("on").executes(c -> { setEnabled(true); return 1; }))
                 .then(literal("off").executes(c -> { setEnabled(false); return 1; }))
         ));
@@ -267,6 +278,40 @@ public final class ElytraCourse {
         say("Courses: " + String.join(", ", store.names())
             + ". Selected: " + store.selected().name() + ". A line appears within five blocks of an endpoint.");
     }
+    private static CourseTransfers transfers() { return new CourseTransfers(CourseTransfers.sharedFolder()); }
+
+    private static void exportCourse(String name) {
+        if (store == null) { say("Join the Nether first."); return; }
+        try {
+            String courseName = name == null ? store.selected().name() : name;
+            var transfer = transfers();
+            var file = transfer.exportCourse(store, courseName);
+            say("Exported " + courseName + ": " + file.getFileName() + ".");
+            var player = Minecraft.getInstance().player;
+            if (player != null) player.sendSystemMessage(Component.literal("[Elytra Course] ")
+                .append(Component.literal("[Open shared folder]").withStyle(style -> style
+                    .withUnderlined(true).withClickEvent(new ClickEvent.OpenFile(transfer.folder()))))
+                .append(" ").append(Component.literal("[Copy import command]").withStyle(style -> style
+                    .withUnderlined(true).withClickEvent(new ClickEvent.CopyToClipboard(
+                        "/elytracourse import \"" + file.getFileName() + "\"")))));
+        } catch (IllegalArgumentException ex) { say(ex.getMessage()); }
+        catch (IOException ex) { LOG.error("Cannot export Elytra course", ex); say("Cannot export course. See latest.log."); }
+    }
+
+    private static void importCourse(String filename, String name) {
+        if (store == null) { say("Join the Nether on the destination server/world first."); return; }
+        try {
+            var imported = transfers().importCourse(store, filename, name);
+            cancelRecording(); armed = null; visible = List.of(); recalculateAll();
+            say("Imported and selected " + imported.name() + ": " + imported.aName() + " to " + imported.bName()
+                + "; " + imported.flights(true).size() + " outward and " + imported.flights(false).size()
+                + " return flights. Approach either endpoint to show the guide.");
+        } catch (IllegalArgumentException ex) { say(ex.getMessage()); }
+        catch (IOException ex) {
+            LOG.error("Cannot import Elytra course", ex);
+            say("Cannot import course: " + ex.getMessage());
+        }
+    }
     @FunctionalInterface private interface Edit { boolean run() throws IOException; }
     private static void edit(Edit change, String success, String failure) {
         if (store == null) { say("Join the Nether first."); return; }
@@ -304,7 +349,7 @@ public final class ElytraCourse {
             say("No learned line yet. A completed trip will announce 'flight saved'; reach the opposite endpoint while gliding or landing nearby.");
         else if (visible.stream().noneMatch(match -> match.name().equalsIgnoreCase(selected.name())))
             say("A course is saved. Stand within five blocks of either endpoint to show its line.");
-        say("Use /elytracourse list, create <name>, select <name>, rename <name>, label a|b <name>, a|b [x y z], clear, or delete.");
+        say("Use /elytracourse list, create <name>, select <name>, rename <name>, label a|b <name>, a|b [x y z], export [name], import <file> [name], clear, or delete.");
     }
 
     private static String direction(CourseStore.Course course, boolean fromA) {

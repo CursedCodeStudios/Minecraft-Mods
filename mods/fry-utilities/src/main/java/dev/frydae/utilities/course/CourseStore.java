@@ -57,6 +57,8 @@ public final class CourseStore {
         Anchor a, b;
         List<CourseGraph.Flight> forward, reverse;
     }
+    private record Transfer(String format, int schema, String dimension, Course course) {}
+    private static final String TRANSFER_FORMAT = "fry-utilities-elytra-course";
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
     private static final int MAX_COURSES = 32, MAX_FLIGHTS = 8, MAX_POINTS = 4_000;
     private final Path file;
@@ -146,6 +148,56 @@ public final class CourseStore {
         Data next = copy(); Course course = next.courses.get(next.selected);
         course.forward.clear(); course.reverse.clear();
         save(next); data = next;
+    }
+
+    public String exportCourse(String name) {
+        Course course = get(name);
+        if (course == null) throw new IllegalArgumentException("No course named " + name + ".");
+        validateTransferCourse(course);
+        return JSON.toJson(new Transfer(TRANSFER_FORMAT, 1, "minecraft:the_nether", course));
+    }
+
+    public Course importCourse(String json, String newName) throws IOException {
+        Course imported;
+        try {
+            Transfer transfer = JSON.fromJson(json, Transfer.class);
+            if (transfer == null || !TRANSFER_FORMAT.equals(transfer.format()) || transfer.schema() != 1
+                || !"minecraft:the_nether".equals(transfer.dimension()))
+                throw new IllegalArgumentException("Unsupported course export format");
+            validateTransferCourse(transfer.course());
+            imported = transfer.course().copy();
+        } catch (RuntimeException ex) {
+            throw new IOException("Invalid course export; existing courses retained", ex);
+        }
+        if (data.courses.size() >= MAX_COURSES)
+            throw new IllegalArgumentException("The 32-course limit was reached. Delete an unused course first.");
+        if (newName != null) {
+            requireName(newName);
+            if (get(newName) != null) throw new IllegalArgumentException("That course name is already used. Choose another import name.");
+            imported.name = newName;
+        } else {
+            String original = imported.name;
+            for (int suffix = 2; get(imported.name) != null; suffix++) {
+                String tail = " " + suffix;
+                imported.name = original.substring(0, Math.min(original.length(), 32 - tail.length())).stripTrailing() + tail;
+            }
+        }
+        Data next = copy();
+        next.selected = keyName(imported.name);
+        next.courses.put(next.selected, imported);
+        save(next); data = next;
+        return selected();
+    }
+
+    private static void validateTransferCourse(Course course) {
+        if (course == null || course.a == null || course.b == null)
+            throw new IllegalArgumentException("Set both endpoints before exporting a course.");
+        Data single = new Data(); single.courses.clear();
+        requireName(course.name);
+        single.selected = keyName(course.name); single.courses.put(single.selected, course);
+        validate(single);
+        if (course.a.distanceSquared(new CourseGraph.Point(course.b.x(), course.b.y(), course.b.z(), 0)) < 32 * 32)
+            throw new IllegalArgumentException("Place endpoints at least 32 blocks apart.");
     }
 
     private Data copy() {
