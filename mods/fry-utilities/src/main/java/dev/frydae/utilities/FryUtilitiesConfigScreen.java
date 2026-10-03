@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 public final class FryUtilitiesConfigScreen extends Screen {
     private static final List<Integer> RANGES = List.of(4, 8, 12, 16, 20, 24, 32, 48, 64);
     private enum Page {
-        FEATURES("Features"), NO_STRIP("No Strip"), SCOUTS("Scouts"), SCOUT_CHAT("Scout chat"), COURSE("Elytra course");
+        FEATURES("Features"), NO_STRIP("No Strip"), SCOUTS("Scouts"), SCOUT_CHAT("Scout chat"), COURSE("Elytra course"), ALTS("Local alts");
         private final String label;
         Page(String label) { this.label = label; }
     }
@@ -35,7 +35,7 @@ public final class FryUtilitiesConfigScreen extends Screen {
 
         addRenderableOnly(new StringWidget(left, top, contentWidth, 20, title, font));
         addRenderableWidget(CycleButton.builder(value -> Component.literal(value.label), page)
-            .withValues(List.of(Page.FEATURES, Page.NO_STRIP, Page.SCOUTS, Page.SCOUT_CHAT, Page.COURSE))
+            .withValues(List.of(Page.FEATURES, Page.NO_STRIP, Page.SCOUTS, Page.SCOUT_CHAT, Page.COURSE, Page.ALTS))
             .create(buttonLeft, top + 24, buttonWidth, 20, Component.literal("Settings page"),
                 (button, selected) -> { page = selected; rebuildWidgets(); }));
 
@@ -44,7 +44,15 @@ public final class FryUtilitiesConfigScreen extends Screen {
         else if (page == Page.NO_STRIP) addNoStripSettings(left, contentWidth, buttonLeft, buttonWidth, y);
         else if (page == Page.SCOUTS) addScoutSettings(left, contentWidth, buttonLeft, buttonWidth, y);
         else if (page == Page.SCOUT_CHAT) addScoutChatSettings(left, contentWidth, buttonLeft, buttonWidth, y);
-        else addCourseSettings(left, contentWidth, buttonLeft, buttonWidth, y);
+        else if (page == Page.COURSE) addCourseSettings(left, contentWidth, buttonLeft, buttonWidth, y);
+        else {
+            addRenderableWidget(Button.builder(Component.literal("Open alt dashboard"), button ->
+                minecraft.gui.setScreen(new dev.frydae.utilities.alts.AltDashboardScreen(this)))
+                .bounds(buttonLeft, y, buttonWidth, 20).build());
+            addRenderableOnly(new MultiLineTextWidget(left, y + 30,
+                Component.literal("View local Alt Affairs accounts and pause or allow sleeping on your current server. No coordination messages are sent to server chat."), font)
+                .setMaxWidth(contentWidth).setCentered(true).setMaxRows(5));
+        }
 
         int footerY = height - 28;
         int smallWidth = (buttonWidth - 8) / 3;

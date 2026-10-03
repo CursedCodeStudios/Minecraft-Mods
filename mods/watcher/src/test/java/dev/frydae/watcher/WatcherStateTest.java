@@ -36,4 +36,18 @@ class WatcherStateTest {
         reloaded.setPaused("server:first", false);
         assertFalse(new WatcherState(file).paused("server:first"));
     }
+
+    @Test void localAcknowledgementSurvivesRestartAndDoesNotOverwriteLaterChatPause() throws Exception {
+        Path file = directory.resolve("watcher/state.properties");
+        var state = new WatcherState(file);
+        state.applyLocalPermission("server:first", false, "resume-1");
+        state.setPaused("server:first", true);
+        var reloaded = new WatcherState(file);
+        assertTrue(reloaded.paused("server:first"));
+        assertEquals("resume-1", reloaded.localRevision("server:first"));
+        assertEquals("", reloaded.localRevision("server:second"));
+        reloaded.applyLocalPermission("server:first", false, "resume-2");
+        assertFalse(new WatcherState(file).paused("server:first"));
+        assertEquals("resume-2", new WatcherState(file).localRevision("server:first"));
+    }
 }

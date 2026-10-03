@@ -51,6 +51,7 @@ public final class FryUtilities implements ClientModInitializer {
         NoStrip.initialize();
         ContainerExporter.initialize();
         ElytraCourse.initialize();
+        dev.frydae.utilities.alts.AltDashboard.initialize();
         ClientTickEvents.END_CLIENT_TICK.register(FryUtilities::tick);
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> save());
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> dispatcher.register(

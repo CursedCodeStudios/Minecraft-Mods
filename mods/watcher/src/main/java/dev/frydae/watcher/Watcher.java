@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import dev.frydae.accounts.LocalAccounts;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
@@ -45,10 +47,15 @@ public final class Watcher implements ClientModInitializer {
     private long nextWake;
     private final Map<BlockPos, Long> retries = new HashMap<>();
     private final ReconnectDelay reconnectDelay = new ReconnectDelay();
+    private LocalAccounts accounts;
+    private String lastServer = "";
+    private String sleepStatus = "Waiting for night";
 
     @Override public void onInitializeClient() {
         try { state = new WatcherState(FabricLoader.getInstance().getConfigDir().resolve("watcher/state.properties")); }
         catch (IOException ex) { LOG.error("Cannot load Watcher state; automatic sleeping disabled", ex); }
+        accounts = new LocalAccounts(true);
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> accounts.close());
         ClientTickEvents.END_CLIENT_TICK.register(this::tick);
         ClientReceiveMessageEvents.CHAT.register((message, signed, sender, type, received) -> {
             var client = Minecraft.getInstance();
@@ -110,8 +117,25 @@ public final class Watcher implements ClientModInitializer {
         reconnect(client);
         refreshContext(client);
         tick++;
-        if (paused) { wake(client); return; }
-        trySleep(client);
+        if (!context.isEmpty() && state != null) {
+            lastServer = context;
+            var permission = accounts.permission(context);
+            if (permission != null && !permission.revision().equals(state.localRevision(context))) {
+                paused = permission.paused();
+                retries.clear(); nextScan = 0;
+                try { state.applyLocalPermission(context, paused, permission.revision()); }
+                catch (IOException ex) { reportSaveFailure(ex); }
+            }
+        }
+        if (paused) wake(client);
+        else if (accounts.ready(context)) trySleep(client);
+        else sleepStatus = "Waiting for local sleep permission";
+        String status = context.isEmpty() ? (client.gui.screen() instanceof ConnectScreen ? "Connecting"
+            : state != null && state.autoReconnect() ? "Disconnected / waiting to reconnect" : "Disconnected")
+            : state == null ? "Settings error" : paused ? "Sleep paused" : !enabled ? "Auto sleep off"
+            : client.player.isSleeping() ? "Sleeping" : sleepStatus;
+        accounts.publish(client.getUser().getName(), context.isEmpty() ? lastServer : context,
+            status, state == null || context.isEmpty() ? "" : state.localRevision(context));
     }
 
     private void trySleep(Minecraft client) {
@@ -119,15 +143,16 @@ public final class Watcher implements ClientModInitializer {
         if (paused || !enabled) return;
         if (!client.level.dimension().equals(Level.OVERWORLD) || !client.player.isAlive()
             || client.player.isSleeping() || client.player.isSpectator() || client.player.isPassenger()
-            || client.player.isShiftKeyDown()) return;
+            || client.player.isShiftKeyDown()) { sleepStatus = "Waiting / unable to sleep"; return; }
         // The same environment rule is used by the server's startSleepInBed.
         var rule = client.level.environmentAttributes().getValue(EnvironmentAttributes.BED_RULE, client.player.blockPosition());
-        if (rule.explodes() || !rule.canSleep(client.level)) { retries.clear(); return; }
+        if (rule.explodes() || !rule.canSleep(client.level)) { sleepStatus = "Waiting for night"; retries.clear(); return; }
         if (tick < nextScan) return;
         nextScan = tick + 10;
         retries.entrySet().removeIf(entry -> entry.getValue() <= tick);
         var hit = nearestBed(client);
-        if (hit == null) return;
+        if (hit == null) { sleepStatus = "No reachable bed / retrying"; return; }
+        sleepStatus = "Trying bed";
         var block = client.level.getBlockState(hit.getBlockPos());
         var head = block.getValue(BedBlock.PART) == BedPart.HEAD ? hit.getBlockPos()
             : hit.getBlockPos().relative(block.getValue(BedBlock.FACING));
@@ -219,9 +244,10 @@ public final class Watcher implements ClientModInitializer {
 
     private void status() {
         refreshContext(Minecraft.getInstance());
-        say("Automatic sleeping " + (enabled ? "on" : "off") + "; chat pause " + (paused ? "active" : "inactive")
+        say("Automatic sleeping " + (enabled ? "on" : "off") + "; sleep pause " + (paused ? "active" : "inactive")
             + "; automatic reconnect " + (state != null && state.autoReconnect() ? "on" : "off")
             + ". Use /watcher on|off or /watcher reconnect on|off.");
+        if (!accounts.error().isEmpty()) say(accounts.error());
     }
 
     private void reportSaveFailure(IOException ex) {

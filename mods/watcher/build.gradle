@@ -1,2 +1,4 @@
 // Uses the shared Fabric conventions; no other suite mod is required.
 base { archivesName = 'alt-affairs' }
+sourceSets.main.java.srcDir rootProject.file('shared/local-accounts/src/main/java')
+sourceSets.test.java.srcDir rootProject.file('shared/local-accounts/src/test/java')

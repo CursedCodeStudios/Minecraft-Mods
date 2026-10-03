@@ -6,6 +6,8 @@ repositories {
     }
 }
 
+sourceSets.main.java.srcDir rootProject.file('shared/local-accounts/src/main/java')
+
 dependencies {
     compileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
     compileOnly "maven.modrinth:xaeros-minimap:${rootProject.xaero_minimap_version}"

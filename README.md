@@ -16,7 +16,9 @@ mods/fry-utilities/             Trading, highlights, and merged structure/entity
 templates/fabric-mod/          Starting point for the next mod
 ```
 
-Version 1.11.0 adds `/elytracourse export` and `/elytracourse import` to Fry Utilities. Main and alt instances on the same machine share a course-export folder, and transfers retain endpoint labels and recorded flights in both directions.
+Version 1.12.0 adds local sleep coordination between Fry Utilities on your main and Alt Affairs on your alts. `/alts` opens a live status dashboard; `/alts sleep pause` and `/alts sleep resume` control alts on your current server without sending server chat. The **Local alts** Mod Menu page also opens the dashboard. Separate instances running under the same operating-system user automatically share communication files; neither mod requires the other for its existing features.
+
+Version 1.11.0 added `/elytracourse export` and `/elytracourse import` to Fry Utilities. Main and alt instances on the same machine share a course-export folder, and transfers retain endpoint labels and recorded flights in both directions.
 
 ## Build and develop
 

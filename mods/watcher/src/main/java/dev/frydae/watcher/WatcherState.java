@@ -26,6 +26,11 @@ public final class WatcherState {
     public boolean paused(String context) { return Boolean.parseBoolean(values.getProperty(key(context) + ".paused", "false")); }
     public boolean enabled(String context) { return Boolean.parseBoolean(values.getProperty(key(context) + ".enabled", "true")); }
     public void setPaused(String context, boolean paused) throws IOException { save(key(context) + ".paused", paused); }
+    public String localRevision(String context) { return values.getProperty(key(context) + ".localRevision", ""); }
+    public void applyLocalPermission(String context, boolean paused, String revision) throws IOException {
+        values.setProperty(key(context) + ".localRevision", revision);
+        setPaused(context, paused);
+    }
     public void setEnabled(String context, boolean enabled) throws IOException { save(key(context) + ".enabled", enabled); }
     public boolean autoReconnect() { return Boolean.parseBoolean(values.getProperty("autoReconnect", "true")); }
     public void setAutoReconnect(boolean enabled) throws IOException { save("autoReconnect", enabled); }

@@ -15,6 +15,18 @@ Send either of these messages in normal server chat from any account:
 
 Commands match the whole chat message, ignoring capitalization and outer spaces. Curly apostrophes are accepted. Signed player chat and common server-formatted chat such as `<Player> message` or `Player: message` are supported. Alt Affairs replies cannot trigger other watchers. Each instance acknowledges each recognized request, so several installed alts can each respond.
 
-The chat pause survives reconnects and game restarts and stays active until the resume phrase is received. Pause and manual enable settings are stored per server or singleplayer world in `config/watcher/state.properties`. Messages sent while an alt is disconnected cannot be observed by that alt.
+The sleep pause survives reconnects and game restarts and stays active until the resume phrase or a new local resume request is received. Pause and manual enable settings are stored per server or singleplayer world in `config/watcher/state.properties`. Messages sent while an alt is disconnected cannot be observed by that alt.
 
 Use `/watcher` for local status, `/watcher off` to disable automatic bed use, and `/watcher on` to enable it. These commands do not send messages to other players. Turning automation back on does not clear a chat pause. Automation is enabled by default for new worlds and servers.
+
+## Local account coordination
+
+Version 1.12.0 adds local status reporting and sleep coordination. Install Fry Utilities 1.12.0 on your main and Alt Affairs 1.12.0 on each alt. Under the same operating-system user, separate Minecraft instances automatically communicate through `<user home>/.fry-utilities/local-accounts` (normally `%USERPROFILE%\.fry-utilities\local-accounts` on Windows). Neither mod depends on the other. Both may also be installed in the same instance.
+
+On your main, `/alts` opens the live dashboard, also available from Mod Menu's Fry Utilities **Local alts** page. It shows account names, server addresses, sleeping/paused/waiting/bed status, and connection state. Crashed instances are marked offline after six seconds without a heartbeat; old records disappear after a day. The dashboard refreshes about once per second. Long rows are clipped to the screen width; `/alts status` prints full rows in local chat.
+
+Use the dashboard's **Pause sleeping** or **Allow sleeping** buttons, or `/alts sleep pause` and `/alts sleep resume`. Requests affect only alts using your main's current server address or singleplayer world path, across dimensions. Use the same saved server address in each instance. No coordination messages or replies are sent to Minecraft server chat. Pending requests are shown until each connected alt acknowledges them, normally within a few seconds.
+
+Pause wakes an already sleeping alt. Allowing sleep clears its bed cooldown and attempts a reachable Overworld bed at night; it does not enable automation if `/watcher off` was used. Daytime alts wait for night. The latest local request remains available for disconnected and newly started alts and persists until changed. Each alt remembers which request it applied, so reconnecting does not undo a later chat pause. Existing server chat phrases continue to work; a fresh local request can also change that pause. Multiple main instances can send requests; the last completed write wins.
+
+Communication file access runs on a background worker. An alt waits for its initial server-specific local permission check before automatic sleeping. Local communication errors appear in the main dashboard and `/watcher` status.

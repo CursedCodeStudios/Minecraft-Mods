@@ -82,6 +82,9 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $watcherEntries -notcontains 'dev/frydae/watcher/Watcher.class') {
             throw 'Alt Affairs is missing its standalone entrypoint'
           }
+          if ($watcherEntries -notcontains 'dev/frydae/accounts/LocalAccounts.class') {
+            throw 'Alt Affairs is missing local account communication'
+          }
           $seedJar = Join-Path build/suite (($manifest.mods | Where-Object id -eq 'seedscout').jar)
           $entries = @(& jar tf $seedJar)
           if ($LASTEXITCODE -ne 0) { throw "Could not inspect $seedJar" }
@@ -93,6 +96,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Could not inspect $utilitiesJar" }
           $mergedEntrypoints = @(
             'dev/frydae/utilities/FryUtilities.class',
+            'dev/frydae/accounts/LocalAccounts.class',
+            'dev/frydae/utilities/alts/AltDashboard.class',
+            'dev/frydae/utilities/alts/AltDashboardScreen.class',
             'dev/frydae/endcity/EndCityScout.class',
             'dev/frydae/slime/SlimeScout.class',
             'dev/frydae/monument/MonumentScout.class'
