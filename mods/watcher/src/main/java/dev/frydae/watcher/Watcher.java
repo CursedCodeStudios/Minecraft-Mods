@@ -146,7 +146,9 @@ public final class Watcher implements ClientModInitializer {
             || client.player.isShiftKeyDown()) { sleepStatus = "Waiting / unable to sleep"; return; }
         // The same environment rule is used by the server's startSleepInBed.
         var rule = client.level.environmentAttributes().getValue(EnvironmentAttributes.BED_RULE, client.player.blockPosition());
-        if (rule.explodes() || !rule.canSleep(client.level)) { sleepStatus = "Waiting for night"; retries.clear(); return; }
+        if (rule.destroyOnUse() || rule.destroyOnLeave() || !rule.canSleep(client.level)) {
+            sleepStatus = "Waiting for night"; retries.clear(); return;
+        }
         if (tick < nextScan) return;
         nextScan = tick + 10;
         retries.entrySet().removeIf(entry -> entry.getValue() <= tick);
@@ -207,7 +209,7 @@ public final class Watcher implements ClientModInitializer {
                 || level.getBlockState(head).getValue(BedBlock.OCCUPIED)) continue;
             if (!sleepReach(player.position(), head) && !sleepReach(player.position(), foot)) continue;
             var rule = level.environmentAttributes().getValue(EnvironmentAttributes.BED_RULE, head);
-            if (rule.explodes() || !rule.canSleep(level)) continue;
+            if (rule.destroyOnUse() || rule.destroyOnLeave() || !rule.canSleep(level)) continue;
             Vec3 target = new Vec3(pos.getX() + .5, pos.getY() + .28, pos.getZ() + .5);
             if (eyes.distanceToSqr(target) > player.blockInteractionRange() * player.blockInteractionRange()) continue;
             var hit = level.clip(new ClipContext(eyes, target, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));

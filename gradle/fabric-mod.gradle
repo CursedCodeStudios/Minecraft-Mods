@@ -1,13 +1,17 @@
 // Shared conventions for each independently installable mod.
 apply plugin: 'net.fabricmc.fabric-loom'
+// Optional per-module targets let one standalone mod upgrade independently.
+def platformPrefix = project.name.replace('-', '_')
+ext.targetMinecraftVersion = providers.gradleProperty("${platformPrefix}_minecraft_version").orElse(rootProject.minecraft_version.toString()).get()
+ext.targetFabricApiVersion = providers.gradleProperty("${platformPrefix}_fabric_api_version").orElse(rootProject.fabric_api_version.toString()).get()
 repositories {
     mavenCentral()
     maven { url = 'https://api.modrinth.com/maven' }
 }
 dependencies {
-    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    minecraft "com.mojang:minecraft:${targetMinecraftVersion}"
     implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
-    implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${targetFabricApiVersion}"
     testImplementation platform("org.junit:junit-bom:${rootProject.junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -28,9 +32,9 @@ tasks.withType(AbstractArchiveTask).configureEach {
 }
 tasks.named('jar') { from(rootProject.file('LICENSE')) }
 def metadataValues = [
-    version: project.version.toString(), minecraft_version: rootProject.minecraft_version,
+    version: project.version.toString(), minecraft_version: targetMinecraftVersion,
     loader_version: rootProject.loader_version, java_version: rootProject.java_version,
-    fabric_api_version: rootProject.fabric_api_version
+    fabric_api_version: targetFabricApiVersion
 ]
 tasks.named('processResources') {
     inputs.properties(metadataValues)

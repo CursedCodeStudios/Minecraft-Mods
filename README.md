@@ -1,6 +1,6 @@
 # Minecraft Mod Suite
 
-A multi-project Fabric workspace for Minecraft 26.2. Each produced mod is independently installable; the suite shares build conventions and releases all modules at one version. Fry Utilities contains villager trading, container JSON exports, a learned Nether Elytra course, drowned highlights, No Strip protection, Slime Scout, Monument Scout, and End City Scout. Bedrock Scout, Seed Scout, and Alt Affairs are separate mods. Version 1.9.0 introduces Alt Affairs for automatic alt-account sleeping with chat pause controls. The merged scouts retain their commands and saved-data locations.
+A multi-project Fabric workspace. Alt Affairs targets Minecraft 26.3; Fry Utilities, Bedrock Scout, and Seed Scout target Minecraft 26.2. Each produced mod is independently installable; the suite shares build conventions and releases all modules at one version. Fry Utilities contains villager trading, container JSON exports, a learned Nether Elytra course, drowned highlights, No Strip protection, Slime Scout, Monument Scout, and End City Scout. Bedrock Scout, Seed Scout, and Alt Affairs are separate mods. Version 1.9.0 introduces Alt Affairs for automatic alt-account sleeping with chat pause controls. The merged scouts retain their commands and saved-data locations.
 
 ## Layout
 
@@ -15,6 +15,8 @@ mods/watcher/                  Automatic alt-account sleeping and chat pause con
 mods/fry-utilities/             Trading, highlights, and merged structure/entity scouts
 templates/fabric-mod/          Starting point for the next mod
 ```
+
+Version 1.13.0 upgrades only Alt Affairs to Minecraft 26.3. Its shared-file coordination remains compatible with Fry Utilities on 26.2. Install the correct Fabric API for each instance; the suite manifest lists per-mod targets.
 
 Version 1.12.0 adds local sleep coordination between Fry Utilities on your main and Alt Affairs on your alts. `/alts` opens a live status dashboard; `/alts sleep pause` and `/alts sleep resume` control alts on your current server without sending server chat. The **Local alts** Mod Menu page also opens the dashboard. Separate instances running under the same operating-system user automatically share communication files; neither mod requires the other for its existing features.
 
@@ -57,6 +59,8 @@ For merge protection, select the `Build and test (ubuntu-latest)` and `Build and
 ## Central versioning
 
 Edit **`suite_version` in `gradle.properties`** to release every mod at the same version. The shared convention expands that version and the Minecraft, Fabric Loader, Java, and Fabric API requirements into `fabric.mod.json`. All dependency versions also live in this file. The Gradle distribution remains pinned by the standard `gradle/wrapper/gradle-wrapper.properties` file.
+
+Modules normally use `minecraft_version` and `fabric_api_version`. Optional `<module>_minecraft_version` and `<module>_fabric_api_version` properties override those targets for one mod, with hyphens in module names replaced by underscores. For example, `watcher_minecraft_version=26.3` upgrades Alt Affairs independently. Metadata verification, CI, and the manifest check each module against its configured target.
 
 `verifySuite` rejects duplicate mod IDs and inconsistent platform/version metadata. It runs as part of root `check`, `build`, and packaging. The generated release manifest lists each mod, version, JAR filename, and required dependencies. Shared archive settings use stable file order and omit file timestamps.
 

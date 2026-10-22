@@ -1,6 +1,6 @@
 # Installing the suite
 
-Use Minecraft Java 26.2 with Java 25, Fabric Loader 0.19.5 or newer, and Fabric API 0.161.0+26.2 or a compatible newer release. The release manifest records exact requirements for this build.
+Use Java 25 and Fabric Loader 0.19.5 or newer. Alt Affairs 1.13.0 targets Minecraft Java 26.3 and requires Fabric API 0.164.0+26.3 or a compatible newer release. Fry Utilities, Bedrock Scout, and Seed Scout still target Minecraft Java 26.2 with Fabric API 0.161.0+26.2. Install only JARs matching the game version of each instance. The release manifest records each mod's exact requirements.
 
 Extract the suite ZIP, then copy the desired JARs from its `mods` directory into your Minecraft instance's `mods` directory. Replace older versions of the same mods; do not keep both installed. The JSON manifest is informational and need not be installed. The suite contains Fry Utilities, Bedrock Scout, Seed Scout, and Alt Affairs. All are client-only and independently installable; no server installation is needed. Fry Utilities contains Slime Scout, Monument Scout, and End City Scout; remove their old standalone JARs when upgrading.
 

@@ -20,6 +20,10 @@ tasks.register('verifySuite') {
     inputs.files(metadataFiles)
     inputs.properties([suiteVersion: version.toString(), minecraftVersion: minecraft_version,
         loaderVersion: loader_version, javaVersion: java_version, fabricApiVersion: fabric_api_version])
+    inputs.properties(modules.collectEntries { mod ->
+        [(mod.name + '.minecraft'): mod.targetMinecraftVersion,
+         (mod.name + '.fabricApi'): mod.targetFabricApiVersion]
+    })
     doLast {
         modules.each { mod ->
             if (mod.version.toString() != project.version.toString()) {
@@ -27,17 +31,17 @@ tasks.register('verifySuite') {
             }
         }
         def ids = [] as Set
-        metadataFiles.each { path ->
-            def metadata = new JsonSlurper().parse(path.get().asFile)
+        modules.each { mod ->
+            def metadata = new JsonSlurper().parse(mod.layout.buildDirectory.file('resources/main/fabric.mod.json').get().asFile)
             if (!metadata.id || !ids.add(metadata.id)) {
                 throw new GradleException("Missing or duplicate mod ID: ${metadata.id}")
             }
             if (metadata.version != project.version.toString()
-                || metadata.depends?.minecraft != project.minecraft_version
+                || metadata.depends?.minecraft != mod.targetMinecraftVersion
                 || metadata.depends?.fabricloader != ">=${project.loader_version}"
                 || metadata.depends?.java != ">=${project.java_version}"
-                || metadata.depends?.get('fabric-api') != ">=${project.fabric_api_version}") {
-                throw new GradleException("${metadata.id} must use shared version/platform placeholders")
+                || metadata.depends?.get('fabric-api') != ">=${mod.targetFabricApiVersion}") {
+                throw new GradleException("${metadata.id} must use its configured version/platform placeholders")
             }
         }
     }

@@ -65,6 +65,7 @@ jobs:
 
       - name: Verify packaged suite modules
         run: |
+          $config = Get-Content gradle.properties -Raw | ConvertFrom-StringData
           $manifest = Get-Content build/suite/suite-manifest.json -Raw | ConvertFrom-Json
           $expected = @('bedrockscout', 'fryutilities', 'seedscout', 'watcher') | Sort-Object
           $actual = @($manifest.mods.id) | Sort-Object
@@ -72,10 +73,25 @@ jobs:
             throw "Suite manifest IDs differ. Expected: $($expected -join ', '); actual: $($actual -join ', ')"
           }
           foreach ($mod in $manifest.mods) {
+            $prefix = if ($mod.id -eq 'watcher') { 'watcher_' } else { '' }
+            $targetMinecraft = $config["${prefix}minecraft_version"]
+            $targetApi = $config["${prefix}fabric_api_version"]
+            if ($mod.requires.minecraft -ne $targetMinecraft -or $mod.requires.'fabric-api' -ne ">=$targetApi") {
+              throw "Incorrect Minecraft or Fabric API target in manifest: $($mod.id)"
+            }
             $jar = Join-Path build/suite $mod.jar
             if (-not (Test-Path -LiteralPath $jar -PathType Leaf)) {
               throw "Missing packaged mod: $jar"
             }
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $jar))
+            try {
+              $reader = [System.IO.StreamReader]::new($archive.GetEntry('fabric.mod.json').Open())
+              try { $metadata = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
+              if ($metadata.depends.minecraft -ne $targetMinecraft -or $metadata.depends.'fabric-api' -ne ">=$targetApi") {
+                throw "Incorrect Minecraft or Fabric API target inside JAR: $($mod.id)"
+              }
+            } finally { $archive.Dispose() }
           }
           $watcherJar = Join-Path build/suite (($manifest.mods | Where-Object id -eq 'watcher').jar)
           $watcherEntries = @(& jar tf $watcherJar)
