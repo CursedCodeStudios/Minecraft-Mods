@@ -1,12 +1,12 @@
 # Monument Scout in Fry Utilities
 
-A client-side feature in Fry Utilities for Minecraft 26.2. It automatically records recognizable ocean monuments and maintains **one Xaero waypoint per monument**, updating its name, symbol, and color as you survey and clear it.
+A client-side feature in Fry Utilities for Minecraft 26.3. It automatically records recognizable ocean monuments and maintains **one Xaero waypoint per monument**, updating its name, symbol, and color as you survey and clear it.
 
 ## Install
 
 Install `fry-utilities-<suite-version>.jar` from the suite's `build/suite` directory with Fabric API and the matching Fabric Loader/Java versions listed in the suite installation guide. Remove the old standalone Monument Scout JAR when upgrading.
 
-Xaero's Minimap is optional (compiled against 26.5.1 for 26.2); add the matching World Map for full-map display. Slime Scout is not required. Select the shared **Minecraft Scouts** waypoint set to see all installed scout mods together in the current dimension.
+Xaero's Minimap is optional (compiled against 26.6.1 for 26.3); add the matching World Map for full-map display. Slime Scout is not required. Select the shared **Minecraft Scouts** waypoint set to see all installed scout mods together in the current dimension.
 
 ## Waypoint states
 
@@ -61,7 +61,7 @@ Different logical worlds behind the same server address/dimension share a data b
 
 From the repository root: `gradlew.bat :fry-utilities:build` (or `./gradlew :fry-utilities:build`). Root `build` packages all suite mods at the centralized suite version.
 
-Automated tests cover discovery signatures, negative coordinates, scan budgets, unloaded chunks, zero-elder first visits, sponge/elder reappearance, unique records, world isolation, and persistence. The code compiles against the actual 26.2 and Xaero artifacts. In-game visual behavior has not been manually verified.
+Automated tests cover discovery signatures, negative coordinates, scan budgets, unloaded chunks, zero-elder first visits, sponge/elder reappearance, unique records, world isolation, and persistence. The code compiles against the actual 26.3 and Xaero artifacts. In-game visual behavior has not been manually verified.
 
 Suggested game checks in a disposable creative world:
 

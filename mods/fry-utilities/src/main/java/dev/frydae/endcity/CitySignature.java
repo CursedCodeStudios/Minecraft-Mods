@@ -2,7 +2,7 @@ package dev.frydae.endcity;
 
 import java.util.*;
 
-/** Block signatures taken from the vanilla 26.2 base_floor and ship templates.
+/** Block signatures from the base_floor and ship templates, verified against vanilla 26.3.
  * Loot, mobs, brewing stand and dragon head deliberately are not part of recognition. */
 public final class CitySignature {
     public enum Block { OTHER, UNLOADED, PURPUR, PILLAR, BRICKS, GLASS, OBSIDIAN }

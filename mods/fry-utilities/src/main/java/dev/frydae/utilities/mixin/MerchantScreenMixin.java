@@ -1,5 +1,6 @@
 package dev.frydae.utilities.mixin;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.frydae.utilities.FastTrade;
 import dev.frydae.utilities.FryUtilities;
 import net.minecraft.client.Minecraft;
@@ -38,7 +39,7 @@ public abstract class MerchantScreenMixin extends AbstractContainerScreen<Mercha
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void fryutilities$toggleFavorite(MouseButtonEvent event, boolean doubled,
         CallbackInfoReturnable<Boolean> result) {
-        if (event.button() != 2) return;
+        if (event.button() != InputConstants.MOUSE_BUTTON_MIDDLE) return;
         int left = (width - imageWidth) / 2, top = (height - imageHeight) / 2;
         if (event.x() < left + 5 || event.x() >= left + 94 || event.y() < top + 18 || event.y() >= top + 158) return;
         int row = (int)(event.y() - top - 18) / 20;

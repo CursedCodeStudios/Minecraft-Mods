@@ -1,13 +1,13 @@
 # Slime Scout in Fry Utilities
 
-A client-side feature in Fry Utilities for **Minecraft Java 26.2**. Walk, explore, or AFK and accumulate slime sightings without knowing the world seed. No server installation is needed.
+A client-side feature in Fry Utilities for **Minecraft Java 26.3**. Walk, explore, or AFK and accumulate slime sightings without knowing the world seed. No server installation is needed.
 
 ## Install
 
-1. Use Minecraft **26.2**, Java **25**, and Fabric Loader **0.19.5 or newer**.
+1. Use Minecraft **26.3**, Java **25**, and Fabric Loader **0.19.5 or newer**.
 2. Put `fry-utilities-<suite-version>.jar` from the repository's `build/suite` or `mods/fry-utilities/build/libs` in your instance's `mods` folder. Remove the old standalone Slime Scout JAR. Do not install the `-sources.jar`. The version is defined in root `gradle.properties`.
-3. Install [Fabric API for 26.2](https://modrinth.com/mod/fabric-api).
-4. For map markers, install [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) for 26.2 (integration compiled against **26.5.1**) and its required dependencies. Add [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map) for full-map display. World Map alone does not provide the waypoint API this mod uses.
+3. Install [Fabric API for 26.3](https://modrinth.com/mod/fabric-api).
+4. For map markers, install [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) for 26.3 (integration compiled against **26.6.1**) and its required dependencies. Add [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map) for full-map display. World Map alone does not provide the waypoint API this mod uses.
 
 Tracking is enabled by default and can be disabled from Fry Utilities' **Scouts** settings page. The mod only sees entities loaded on your client, including slimes behind walls; it does not inspect unloaded chunks or query the server seed. Magma cubes are excluded.
 
@@ -72,12 +72,12 @@ On this workspace, a local JDK and Gradle were downloaded to ignored `.tools` fo
 
 ## Validation
 
-The project compiles against the actual Minecraft 26.2 and Xaero Minimap 26.5.1 artifacts. Automated tests cover persistence, evidence upgrades, context isolation, corrupt-file preservation, repeated observations, movement, and entity unload/reset. In-game visual behavior has not been manually verified.
+The project compiles against the actual Minecraft 26.3 and Xaero Minimap 26.6.1 artifacts. Automated tests cover persistence, evidence upgrades, context isolation, corrupt-file preservation, repeated observations, movement, and entity unload/reset. In-game visual behavior has not been manually verified.
 
 Suggested in-game check in a disposable creative world:
 
 1. Run without Xaero and summon a slime below Y=40. Check `/slimescout here` and reconnect to verify persistence. Summoning tests detection, not real slime-chunk identification.
-2. Repeat with Xaero Minimap 26.5.1 and matching World Map/dependencies. Check the green `S?` marker on both maps.
+2. Repeat with Xaero Minimap 26.6.1 and matching World Map/dependencies. Check the green `S?` marker on both maps.
 3. Summon a slime above Y=40 in a different chunk; check the yellow marker. Move a tracked slime across a boundary below Y=40 and check the destination stays yellow.
 4. Summon a magma cube and confirm it is ignored. Change dimensions and worlds to check separation. Toggle markers and tracking independently.
 

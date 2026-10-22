@@ -73,9 +73,8 @@ jobs:
             throw "Suite manifest IDs differ. Expected: $($expected -join ', '); actual: $($actual -join ', ')"
           }
           foreach ($mod in $manifest.mods) {
-            $prefix = if ($mod.id -eq 'watcher') { 'watcher_' } else { '' }
-            $targetMinecraft = $config["${prefix}minecraft_version"]
-            $targetApi = $config["${prefix}fabric_api_version"]
+            $targetMinecraft = $config.minecraft_version
+            $targetApi = $config.fabric_api_version
             if ($mod.requires.minecraft -ne $targetMinecraft -or $mod.requires.'fabric-api' -ne ">=$targetApi") {
               throw "Incorrect Minecraft or Fabric API target in manifest: $($mod.id)"
             }

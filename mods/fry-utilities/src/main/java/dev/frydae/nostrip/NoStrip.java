@@ -2,8 +2,6 @@ package dev.frydae.nostrip;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.frydae.utilities.FryUtilities;
-import dev.frydae.utilities.mixin.AxeItemAccessor;
-import dev.frydae.utilities.mixin.ShovelItemAccessor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
@@ -11,19 +9,15 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.AxeItem;
-import net.minecraft.world.item.HoneycombItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ShovelItem;
+import net.minecraft.world.item.component.BlockTransformers;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.WeatheringCopper;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +35,7 @@ public final class NoStrip {
     public static void initialize() {
         var category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("nostrip", "keys"));
         toggle = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-            "key.nostrip.togglestrip", InputConstants.Type.KEYSYM, InputConstants.KEY_Y, category));
+            "key.nostrip.togglestrip", InputConstants.Type.KEYBOARD, InputConstants.KEY_Y, category));
         UseBlockCallback.EVENT.register(NoStrip::useBlock);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggle.consumeClick()) toggleProtection();
@@ -51,41 +45,24 @@ public final class NoStrip {
     private static InteractionResult useBlock(Player player, Level level,
         net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide() || !FryUtilities.config().noStripProtection()) return InteractionResult.PASS;
-        ItemStack stack = player.getItemInHand(hand);
-        BlockState state = level.getBlockState(hit.getBlockPos());
-        boolean prevented = stack.getItem() instanceof ShovelItem
-            ? isShovelPathAttempt(level, state, hit.getBlockPos(), hit.getDirection())
-            : preventsTransformation(stack, state);
-        if (!prevented) return InteractionResult.PASS;
-        showPrevented(player);
-        return InteractionResult.FAIL;
+        return preventTransformation(new UseOnContext(player, hand, hit)) ? InteractionResult.FAIL : InteractionResult.PASS;
     }
 
-    static boolean preventsTransformation(ItemStack stack, BlockState state) {
-        var block = state.getBlock();
-        if (stack.getItem() instanceof AxeItem)
-            return AxeItemAccessor.fryutilities$getStrippables().containsKey(block)
-                || WeatheringCopper.getPrevious(state).isPresent()
-                || HoneycombItem.WAX_OFF_BY_BLOCK.get().containsKey(block);
-        return false;
-    }
-
-    /** Exact-method fallback for shovel path creation if another callback bypasses the general hook. */
-    public static boolean preventShovelPath(UseOnContext context) {
-        if (!FryUtilities.config().noStripProtection()
-            || !(context.getItemInHand().getItem() instanceof ShovelItem)) return false;
+    /** Shared block-use gate and exact-method fallback for the 26.3 transformer API. */
+    public static boolean preventTransformation(UseOnContext context) {
         Level level = context.getLevel();
+        if (!level.isClientSide() || !FryUtilities.config().noStripProtection()) return false;
+        var transformer = context.getItemInHand().get(DataComponents.BLOCK_TRANSFORMER);
+        if (transformer == null || !(transformer.is(BlockTransformers.AXE) || transformer.is(BlockTransformers.SHOVEL)))
+            return false;
         BlockPos pos = context.getClickedPos();
-        if (!isShovelPathAttempt(level, level.getBlockState(pos), pos, context.getClickedFace())) return false;
-        if (level.isClientSide() && context.getPlayer() != null) showPrevented(context.getPlayer());
+        var result = NoStripTransforms.firstResult(transformer.value(), level, pos, context.getClickedFace());
+        if (result == null || result.equals(level.getBlockState(pos))) return false;
+        boolean prevented = transformer.is(BlockTransformers.AXE)
+            || (result.is(Blocks.DIRT_PATH) && SchematicPathPolicy.shouldBlock(schematicExpectation(pos)));
+        if (!prevented) return false;
+        if (context.getPlayer() != null) showPrevented(context.getPlayer());
         return true;
-    }
-
-    private static boolean isShovelPathAttempt(Level level, BlockState state, BlockPos pos, Direction face) {
-        return face != Direction.DOWN
-            && level.getBlockState(pos.above()).isAir()
-            && ShovelItemAccessor.fryutilities$getFlattenables().containsKey(state.getBlock())
-            && SchematicPathPolicy.shouldBlock(schematicExpectation(pos));
     }
 
     private static SchematicPathPolicy.Expectation schematicExpectation(BlockPos pos) {

@@ -8,6 +8,36 @@ import static org.junit.jupiter.api.Assertions.*;
 import dev.frydae.endcity.CitySignature.*;
 
 class CitySignatureTest {
+    @Test void signatureFixturesMatchTheCurrentGamesShippedTemplates() throws Exception {
+        for (String name : List.of("base_floor", "ship")) {
+            try (var input = Objects.requireNonNull(getClass().getResourceAsStream(
+                "/data/minecraft/structure/end_city/" + name + ".nbt"))) {
+                var template = net.minecraft.nbt.NbtIo.readCompressed(input, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+                var palette = template.getListOrEmpty("palette");
+                assertFalse(palette.isEmpty(), "Missing palette: " + template.keySet());
+                var actual = new HashMap<Pos, Block>();
+                for (var tag : template.getListOrEmpty("blocks")) {
+                    var block = (net.minecraft.nbt.CompoundTag)tag;
+                    var pos = block.getListOrEmpty("pos");
+                    var paletteEntry = palette.getCompoundOrEmpty(block.getIntOr("state", -1));
+                    String type = paletteEntry.getStringOr("id", "");
+                    assertFalse(type.isEmpty(), "Unknown palette entry: " + palette.get(block.getIntOr("state", -1)));
+                    Block value = switch (type) {
+                        case "minecraft:purpur_block" -> Block.PURPUR;
+                        case "minecraft:purpur_pillar" -> Block.PILLAR;
+                        case "minecraft:end_stone_bricks" -> Block.BRICKS;
+                        case "minecraft:magenta_stained_glass" -> Block.GLASS;
+                        case "minecraft:obsidian" -> Block.OBSIDIAN;
+                        default -> Block.OTHER;
+                    };
+                    actual.put(new Pos(pos.getIntOr(0, 0), pos.getIntOr(1, 0), pos.getIntOr(2, 0)), value);
+                }
+                var expected = fixture(name, new Pos(0, 0, 0), 0);
+                for (var entry : expected.entrySet())
+                    assertEquals(entry.getValue(), actual.get(entry.getKey()), name + " at " + entry.getKey());
+            }
+        }
+    }
     // Fixtures are block positions/types extracted from the shipped 26.2 NBT templates,
     // independently of the samples in the detector. Loot and entities are omitted.
     private Map<Pos, Block> fixture(String name, Pos origin, int rotation) throws Exception {

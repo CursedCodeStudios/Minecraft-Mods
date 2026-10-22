@@ -3,10 +3,8 @@
   "package": "dev.frydae.utilities.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "AxeItemAccessor",
+    "BlockTransformerMixin",
     "ContainerScreenAccessor",
-    "ShovelItemAccessor",
-    "ShovelItemMixin",
     "ClientLevelMixin",
     "EntityRendererMixin",
     "LevelRendererMixin",

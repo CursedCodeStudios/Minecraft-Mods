@@ -1,6 +1,6 @@
 # Bedrock Scout
 
-Bedrock Scout is a client-only Fabric mod for Minecraft 26.2 that searches loaded Nether-ceiling chunks for places suitable for a wither-killing platform.
+Bedrock Scout is a client-only Fabric mod for Minecraft 26.3 that searches loaded Nether-ceiling chunks for places suitable for a wither-killing platform.
 
 A candidate has all nine bedrock blocks in a horizontal 3x3 square at Y=123 through Y=127 and no bedrock anywhere beneath that footprint in the ceiling band. Air, netherrack, and other removable blocks underneath are allowed. The mod does not require the platform to be at Y=127 or require any particular blocks above it. If more than one height qualifies at the same X/Z center, it records the lowest one.
 

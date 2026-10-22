@@ -1,6 +1,6 @@
 # End City Scout in Fry Utilities
 
-A client-side feature in Fry Utilities for Minecraft 26.2. It records End cities and ships, checks the **ship's elytra item frame**, and reports **living shulkers observed** nearby. It integrates optionally with Xaero's Minimap and World Map.
+A client-side feature in Fry Utilities for Minecraft 26.3. It records End cities and ships, checks the **ship's elytra item frame**, and reports **living shulkers observed** nearby. It integrates optionally with Xaero's Minimap and World Map.
 
 ## Install and use
 
@@ -56,7 +56,7 @@ Records are stored under `config/end-city-scout`, separated by singleplayer save
 
 Ships remain recorded after looting; saved elytra and shulker observations remain in the compact label until refreshed. Xaero markers are permanent, saved through Xaero, and reused across reconnects. Leaving a dimension does not delete them; obsolete branch-center markers are still removed when the main center is recognized. Without Xaero, commands and discovery chat messages remain available.
 
-Build from the repository root with `gradlew.bat :fry-utilities:build`, or build the complete suite with `gradlew.bat build`. Tests cover signatures against block fixtures extracted from the actual 26.2 templates, all rotations, negative coordinates, exact frame positions, interrupted absence timers, missing/unloaded coverage, large-city zero prevention, nearest-city association, persistence, and corrupt data.
+Build from the repository root with `gradlew.bat :fry-utilities:build`, or build the complete suite with `gradlew.bat build`. Tests cover signatures against block fixtures extracted from the actual 26.3 templates, all rotations, negative coordinates, exact frame positions, interrupted absence timers, missing/unloaded coverage, large-city zero prevention, nearest-city association, persistence, and corrupt data.
 
 In-game visual behavior has not been manually verified. Suggested checks in a disposable creative world:
 

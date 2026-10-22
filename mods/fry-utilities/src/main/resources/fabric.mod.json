@@ -23,9 +23,9 @@
     "fabric-api": ">=${fabric_api_version}"
   },
   "suggests": {
-    "modmenu": ">=20.0.0",
-    "litematica": ">=0.28.4",
-    "malilib": ">=0.29.2",
+    "modmenu": ">=21.0.0",
+    "litematica": ">=0.29.1",
+    "malilib": ">=0.30.2",
     "xaerominimap": "*",
     "xaeroworldmap": "*"
   },
